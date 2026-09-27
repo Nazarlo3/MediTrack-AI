@@ -39,18 +39,17 @@ class SymptomViewModel : ViewModel() {
                 if (response.isSuccessful && response.body() != null) {
                     _uiState.value = SymptomUiState.Success(response.body()!!)
                 } else {
-                    val errorDetail = response.errorBody()?.string() ?: ""
                     _uiState.value = SymptomUiState.Error(
-                        "Сервер повернув помилку (${response.code()}): $errorDetail"
+                        "Сервіс тимчасово недоступний. Спробуйте ще раз."
                     )
                 }
             } catch (e: IOException) {
                 _uiState.value = SymptomUiState.Error(
-                    "Помилка мережі: ${e.message ?: e.toString()}"
+                    "Не вдалося з'єднатися з сервером. Перевірте підключення до мережі та чи запущено бекенд."
                 )
             } catch (e: Exception) {
                 _uiState.value = SymptomUiState.Error(
-                    "Помилка: ${e.message ?: e.toString()}"
+                    "Щось пішло не так. Спробуйте ще раз."
                 )
             }
         }
