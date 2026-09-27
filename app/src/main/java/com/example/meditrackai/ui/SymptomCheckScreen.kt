@@ -61,7 +61,15 @@ fun SymptomCheckScreen(viewModel: SymptomViewModel = viewModel()) {
             }
 
             is SymptomUiState.Loading -> {
-                CircularProgressIndicator()
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Аналізуємо... Перший запит може тривати 20–30 сек, поки прокидається хмарний сервер.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             is SymptomUiState.Success -> {

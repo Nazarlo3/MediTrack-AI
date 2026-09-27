@@ -45,7 +45,7 @@ class SymptomViewModel : ViewModel() {
                 }
             } catch (e: IOException) {
                 _uiState.value = SymptomUiState.Error(
-                    "Не вдалося з'єднатися з сервером. Перевірте підключення до мережі та чи запущено бекенд."
+                    "Не вдалося з'єднатися з сервером. Перевірте підключення та натисніть «Спробувати ще раз»."
                 )
             } catch (e: Exception) {
                 _uiState.value = SymptomUiState.Error(
