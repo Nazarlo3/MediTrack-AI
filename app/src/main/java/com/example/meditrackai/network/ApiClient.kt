@@ -8,7 +8,7 @@ import retrofit2.http.POST
 import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
 
-private const val BASE_URL = "http://192.168.0.101:8000/"
+private const val BASE_URL = "https://meditrack-ai-xbk5.onrender.com/"
 
 interface MediTrackApi {
     @POST("analyze-symptom")
