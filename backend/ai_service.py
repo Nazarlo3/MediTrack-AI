@@ -39,11 +39,13 @@ ALLOWED_CATEGORIES = [
 ALLOWED_URGENCIES = ["звичайне", "увага", "терміново"]
 
 SYSTEM_PROMPT = (
-    "Ти — асистент, який лише КАТЕГОРИЗУЄ загальний опис самопочуття людини. "
-    "Ти НЕ ставиш діагноз і не даєш медичних порад. "
+    "Ти — медичний асистент первинної оцінки. "
+    "Ти НЕ ставиш діагноз і не даєш порад щодо лікування. "
     f"Обери рівно одну категорію зі списку: {', '.join(ALLOWED_CATEGORIES)}. "
-    "Визнач рівень терміновості з трьох варіантів: 'звичайне' (плановий прийом/самопочуття в нормі), "
-    "'увага' (потрібна консультація найближчими днями) або 'терміново' (сильний біль чи небезпечний стан). "
+    "Обов'язково чітко оціни рівень терміновості (urgency) за такими суворими правилами: "
+    "1. 'терміново' — якщо є травми голови/хребта, удар головою, колоті чи глибокі рани (наприклад, наступив/став на цвях), сильний біль, кровотеча, біль у серці, втрата свідомості чи раптові травми. "
+    "2. 'увага' — якщо є застуда, кашель, помірний біль, висип, що потребують візиту до лікаря найближчими днями. "
+    "3. 'звичайне' — лише просте легке нездужання або короткочасний слабкий симптом. "
     "Дай коротке (1-2 речення) нейтральне пояснення, чому обрано цю категорію. "
     "Відповідай СУВОРО у форматі JSON без жодного додаткового тексту: "
     '{"category": "<категорія>", "explanation": "<коротке пояснення>", "urgency": "<звичайне|увага|терміново>"}'
@@ -64,9 +66,9 @@ def _get_api_key() -> str:
 
 def categorize_symptom(description: str) -> dict:
     """
-    Надсилає опис симптому до Groq API та повертає категорію + пояснення.
+    Надсилає опис симптому до Groq API та повертає категорію + пояснення + терміновість.
 
-    Повертає dict: {"category": str, "explanation": str}
+    Повертає dict: {"category": str, "explanation": str, "urgency": str}
     Кидає AIServiceError, якщо AI недоступний або повернув некоректну відповідь.
     """
     api_key = _get_api_key()
@@ -78,7 +80,7 @@ def categorize_symptom(description: str) -> dict:
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": description},
         ],
-        "temperature": 0.2,
+        "temperature": 0.1,
         "max_tokens": 200,
     }
 
@@ -102,7 +104,15 @@ def categorize_symptom(description: str) -> dict:
         parsed = json.loads(raw_content)
         category = parsed.get("category", "інше").strip().lower()
         explanation = parsed.get("explanation", "").strip()
-        urgency = parsed.get("urgency", "звичайне").strip().lower()
+        raw_urgency = parsed.get("urgency", "звичайне").strip().lower()
+
+        if "термін" in raw_urgency:
+            urgency = "терміново"
+        elif "уваг" in raw_urgency:
+            urgency = "увага"
+        else:
+            urgency = "звичайне"
+
     except (KeyError, IndexError, json.JSONDecodeError, AttributeError) as exc:
         logger.error("Groq API: неочікуваний формат відповіді (%s)", exc)
         raise AIServiceError("AI повернув некоректну відповідь")
@@ -110,9 +120,5 @@ def categorize_symptom(description: str) -> dict:
     if category not in ALLOWED_CATEGORIES:
         logger.warning("Groq повернув категорію поза списком: %s", category)
         category = "інше"
-
-    if urgency not in ALLOWED_URGENCIES:
-        logger.warning("Groq повернув терміновість поза списком: %s", urgency)
-        urgency = "звичайне"
 
     return {"category": category, "explanation": explanation, "urgency": urgency}
