@@ -57,7 +57,11 @@ def analyze_symptom(request: SymptomRequest):
         logger.error("AI service error: %s", exc)
         raise HTTPException(status_code=503, detail=str(exc))
 
-    return SymptomResponse(category=result["category"], explanation=result["explanation"])
+    return SymptomResponse(
+        category=result["category"],
+        explanation=result["explanation"],
+        urgency=result["urgency"],
+    )
 
 
 @app.exception_handler(Exception)

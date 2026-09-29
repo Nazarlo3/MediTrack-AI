@@ -21,6 +21,10 @@ class SymptomResponse(BaseModel):
 
     category: str = Field(..., description="Визначена категорія звернення.")
     explanation: str = Field(..., description="Коротке пояснення, чому обрано цю категорію.")
+    urgency: str = Field(
+        default="звичайне",
+        description="Рівень терміновості звернення: звичайне, увага, терміново.",
+    )
     disclaimer: str = Field(
         default="Це не медичний діагноз. У разі проблем зі здоров'ям зверніться до лікаря.",
         description="Обов'язкове застереження.",

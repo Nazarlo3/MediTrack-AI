@@ -36,13 +36,17 @@ ALLOWED_CATEGORIES = [
     "інше",
 ]
 
+ALLOWED_URGENCIES = ["звичайне", "увага", "терміново"]
+
 SYSTEM_PROMPT = (
     "Ти — асистент, який лише КАТЕГОРИЗУЄ загальний опис самопочуття людини. "
     "Ти НЕ ставиш діагноз і не даєш медичних порад. "
     f"Обери рівно одну категорію зі списку: {', '.join(ALLOWED_CATEGORIES)}. "
+    "Визнач рівень терміновості з трьох варіантів: 'звичайне' (плановий прийом/самопочуття в нормі), "
+    "'увага' (потрібна консультація найближчими днями) або 'терміново' (сильний біль чи небезпечний стан). "
     "Дай коротке (1-2 речення) нейтральне пояснення, чому обрано цю категорію. "
     "Відповідай СУВОРО у форматі JSON без жодного додаткового тексту: "
-    '{"category": "<одна з категорій>", "explanation": "<коротке пояснення>"}'
+    '{"category": "<категорія>", "explanation": "<коротке пояснення>", "urgency": "<звичайне|увага|терміново>"}'
 )
 
 
@@ -96,8 +100,9 @@ def categorize_symptom(description: str) -> dict:
     try:
         raw_content = response.json()["choices"][0]["message"]["content"].strip()
         parsed = json.loads(raw_content)
-        category = parsed["category"].strip().lower()
-        explanation = parsed["explanation"].strip()
+        category = parsed.get("category", "інше").strip().lower()
+        explanation = parsed.get("explanation", "").strip()
+        urgency = parsed.get("urgency", "звичайне").strip().lower()
     except (KeyError, IndexError, json.JSONDecodeError, AttributeError) as exc:
         logger.error("Groq API: неочікуваний формат відповіді (%s)", exc)
         raise AIServiceError("AI повернув некоректну відповідь")
@@ -106,4 +111,8 @@ def categorize_symptom(description: str) -> dict:
         logger.warning("Groq повернув категорію поза списком: %s", category)
         category = "інше"
 
-    return {"category": category, "explanation": explanation}
+    if urgency not in ALLOWED_URGENCIES:
+        logger.warning("Groq повернув терміновість поза списком: %s", urgency)
+        urgency = "звичайне"
+
+    return {"category": category, "explanation": explanation, "urgency": urgency}
