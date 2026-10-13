@@ -26,7 +26,5 @@ scratch/
 
 # Local device selection and working report files
 /.idea/deploymentTargetSelector.xml
-/docs/various files/*
-!/docs/various files/screenshot/
-!/docs/various files/Відповідь джемені_1.txt
-!/docs/various files/Скриншоти_для_Claude_ЛР3.md
+/docs/various files/
+/various files/
