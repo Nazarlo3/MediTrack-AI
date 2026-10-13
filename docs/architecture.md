@@ -5,7 +5,7 @@
 ```text
 [ Android App (Compose UI + ViewModel + Retrofit) ]
                        │
-                       │ HTTP POST /analyze-symptom (JSON)
+                       │ HTTPS POST /analyze-symptom (JSON)
                        ▼
 [ FastAPI Backend on Render.com (main.py + models.py + ai_service.py) ]
                        │
@@ -19,6 +19,19 @@
 - **`SymptomViewModel.kt`**: Бізнес-логіка, збереження стану екрана (`StateFlow`), обробка винятків мережі.
 - **`ApiClient.kt`**: Налаштування Retrofit та OkHttp клієнта з таймаутом 60 секунд.
 - **`SymptomModels.kt`**: Data-класи запиту `SymptomRequest` та відповіді `SymptomResponse`.
+- **`data/LocalDataStore.kt`**: Послідовне локальне збереження історії та ліків у `SharedPreferences` з читанням старого формату.
+- **`validation/FormValidators.kt`**: Перевірки введення симптому та даних препарату.
+- **`MedicationSection.kt` / `PhotoStorage.kt`**: Форма і список препаратів, копіювання та видалення локальних фото.
+- **`DebugMenu.kt` / `DebugAlarmReceiver.kt`**: Окремі тестові інструменти та сповіщення.
+- **`reminders/MedicationSchedule.kt`**: Чисте обчислення найближчого прийому в локальному часовому поясі, з урахуванням днів, кінця курсу та статусу прийому.
+- **`MedicationReminderScheduler.kt`**: `AlarmManager`, окремий канал сповіщень, скасування та послідовна звірка графіка. Службові метадані в окремих `SharedPreferences` не змінюють JSON препаратів.
+- **`ReminderAlarmRegistration.kt`**: Запис часу лише після успішної реєстрації alarm; за помилки — скасування й очищення службового запису. Ручне й автоматичне оновлення зберігають очікуваний сьогоднішній alarm без зафіксованих помилок; примусове скидання використовується для системного відновлення.
+- **`MedicationReminderReceiver.kt`**: Читає актуальні записи з диска, перевіряє прийом і показує повідомлення, далі планує наступний день. Працює незалежно від ViewModel та відкритого екрана.
+- **`ReminderRestoreReceiver.kt`**: Відновлює майбутні alarm після завантаження, оновлення пакета, зміни годинника/поясу та надання доступу до точних alarm.
+
+Графік локальний: `SharedPreferences → MedicationSchedule → AlarmManager → BroadcastReceiver → NotificationManager`. Після успішних змін ліків ViewModel запускає звірку; вкладка ліків оновлює дозволи й графік після повернення з налаштувань. Точний alarm використовується за доступу, інакше приблизний із відповідним повідомленням у UI.
+
+Статус препарату визначається датою `lastTakenDate`, а не лише старим `isTaken`. Новий список пишеться в `medications_list_v2`; за відсутності нового ключа читається старий формат. Операції сховища серіалізовані, помилка читання блокує перезапис пошкоджених даних.
 
 ### 2. Backend (FastAPI)
 - **`main.py`**: Точка входу FastAPI сервера з ендпоінтами `/health` та `/analyze-symptom`.
@@ -26,4 +39,4 @@
 - **`ai_service.py`**: Модуль взаємодії з Groq API, завантаження `.env` ключів, системні промпти та відловлювання помилок.
 
 ### 3. AI Component
-- **Groq Cloud API** з моделлю `qwen/qwen3.8-27b`, яка повертає гарантовану JSON-структуру `{"category": "...", "explanation": "..."}`.
+- **Groq Cloud API** з моделлю `qwen/qwen3.8-27b`: запитується `json_object` з полями `category`, `explanation`, `urgency`. Backend обробляє помилки сервісу та додає застереження до відповіді. Формат запиту не гарантує коректності кожної відповіді AI.

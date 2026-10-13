@@ -1,0 +1,113 @@
+1. Виконані команди та фактичні результати
+•
+Команда перевірки збірки: .\gradlew.bat :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease
+◦
+Перший запуск: Неповна конфігурація системного середовища у звичайному PowerShell — JAVA_HOME is not set.
+◦
+Повторний запуск (з вказуванням JDK Android Studio C:/Program Files/Android/Android Studio/jbr та усуненням конфлікту системної змінної ANDROID_PREFS_ROOT):
+▪
+Результат: BUILD SUCCESSFUL in 11s.
+▪
+Unit-тести (:app:testDebugUnitTest): 10 з 10 тестів пройшли успішно (3 у FormValidatorsTest, 7 у MedicationScheduleTest), 0 помилок, 0 пропущено.
+▪
+Lint (:app:lintDebug): 0 помилок, 41 попередження (0 критичних).
+▪
+Збірки (:app:assembleDebug, :app:assembleRelease): Успішно згенеровано debug та release APK.
+•
+Аналіз коду та Git: Виконано читання документації ( docs/ai-instructions.md,  docs/testing.md,  docs/api-contract.md,  docs/impl/feature_6/plan.md,  changelog.md), сирцевого коду Android та backend. Проведено аналіз git status та git --no-pager diff. Жодних API-ключів, секретів або вмісту .env у файлах проєкту та diff не виявлено.
+2. Результати перевірок
+Перевірка
+Спосіб перевірки
+Результат
+Доказ
+Узгодженість моделей та urgency
+Аналіз коду backend та Android
+Успішно
+backend/models.py (SymptomResponse),  ai_service.py (ALLOWED_URGENCIES), Android SymptomModels.kt (urgency: String? = "звичайне"), SymptomCheckScreen.kt (SuccessCard, HistoryCardItem).
+Коректний опис симптому (3–500 симв.)
+Аналіз коду Android та backend
+Успішно
+FormValidators.kt#symptomError перевіряє in 3..500. Backend models.py містить min_length=3, max_length=500.
+Порожній ввід та самі пробіли
+Аналіз коду Android та backend
+Успішно
+Android: FormValidators.kt обрізає пробіли та повертає помилку UI. Backend: main.py відхиляє "" через 422 Pydantic, а "   " через .strip() з 400 Bad Request.
+Граничні довжини (2, 3, 500, 501)
+Аналіз коду та unit-тести
+Успішно
+FormValidatorsTest.kt#symptomLengthMatchesBackend: 2 і 501 відхиляються, 3 і 500 проходять. Backend Pydantic має тотожні межі.
+3 рівні urgency (звичайне, увага, терміново)
+Аналіз коду UI та AI-сервісу
+Успішно
+ ai_service.py нормалізує відповідь LLM. SymptomCheckScreen.kt обробляє 3 стани картки ("Плановий/Звичайний", "Увага", "Терміново") та їх кольорове кодування.
+Відсутність інтернету та повторна спроба
+Аналіз коду Android ViewModel
+Успішно
+SymptomViewModel.kt#checkSymptom перехоплює IOException, виставляє SymptomUiState.Error(canRetry = true). retryLastCheck() повторює останній запис lastDescription.
+Сумісність запиту (лише description)
+Аналіз коду моделей та LocalDataStore
+Успішно
+SymptomRequest містить лише description. SymptomResponse у Kotlin має дефолтний urgency = "звичайне". LocalDataStore підтримує збереження v1 та v2.
+Обчислення графіка нагадувань (Feature 6)
+Unit-тести та аналіз коду
+Успішно
+MedicationSchedule.kt та 7 unit-тестів у MedicationScheduleTest.kt (час, дні, вихідні, кінцева дата, DST, часові пояси).
+Системні дозволи нагадувань (Feature 6)
+Аналіз коду та Manifest
+Успішно
+AndroidManifest.xml (POST_NOTIFICATIONS, SCHEDULE_EXACT_ALARM, RECEIVE_BOOT_COMPLETED). MedicationReminderScheduler.kt перевіряє canScheduleExactAlarms() та areNotificationsEnabled().
+Скасування й відновлення нагадувань (Feature 6)
+Аналіз коду
+Успішно
+MedicationReminderScheduler.kt#synchronize скасовує видалені/прийняті Alarm. ReminderRestoreReceiver.kt відновлює Alarm після BOOT_COMPLETED, TIMEZONE_CHANGED, MY_PACKAGE_REPLACED.
+Перевірка на відсутність секретів у Git
+Аналіз git diff
+Успішно
+Ключ GROQ_API_KEY зчитується з змінних середовища/.env, якого немає у Git.
+3. Знайдені проблеми
+1.
+Конфігурація середовища для CLI Gradle:
+◦
+Під час стандартного запуску .\gradlew.bat у терміналі відсутня змінна JAVA_HOME у замовчувальному оточенні PowerShell.
+◦
+Виявлено конфлікт системних змінних ANDROID_PREFS_ROOT та ANDROID_USER_HOME, що викликало помилку ініціалізації Android Gradle Plugin (AndroidLocationsBuildService). При використанні JDK Android Studio та очищенні ANDROID_PREFS_ROOT збірка проходить повністю успішно.
+2.
+Покриття тестами:
+◦
+Для SymptomViewModel, LocalDataStore та FastAPI ендпоінтів відсутні окремі автоматичні unit-тести (перевірка виконувалася через аналіз коду).
+4. Що лишилося перевірити на телефоні (неперевірені ручні сценарії)
+Примітка: Повідомлений користувачем результат про отримання одного production-повідомлення у згорнутому стані зафіксовано, проте інші фізичні сценарії залишаються неперевіреними:
+1.
+Перезавантаження телефона: Створити нагадування на майбутній час, перезавантажити телефон і перевірити, чи спрацює ReminderRestoreReceiver та чи надійде сповіщення.
+2.
+Відмова в дозволах: Скасувати дозвіл точного часу (SCHEDULE_EXACT_ALARM) або сповіщень. Перевірити, що UI відображає картку з поясненням і кнопкою переходу в налаштування, а застосунок не падає.
+3.
+Два препарати на один час: Перевірити, що надходять обидва сповіщення (різні ID PendingIntent) і жодне не губиться.
+4.
+Зміна часового поясу / системного часу: Змінити часовий пояс пристрою та перевірити, що нагадування адаптуються під місцевий час.
+5.
+Завершений курс та старий формат: Додати препарат із датою закінчення в минулому або форматом часу без HH:mm (наприклад, "перед обідом") і переконатися, що нагадування не плануються, а в картці є пояснення.
+6.
+Release-збірка: Установити release APK та перевірити роботу нагадувань без активного DebugMenu.
+5. Які тести пропонується додати (поки не додано)
+1.
+SymptomViewModelTest.kt (Unit-тести):
+◦
+Перевірка переходу стану в Error(canRetry = false) при некоректній довжині опису (коротший за 3 символи).
+◦
+Перевірка збереження lastDescription та повторного виклику через retryLastCheck().
+◦
+Перевірка очищення історії через clearHistory().
+2.
+LocalDataStoreTest.kt (Unit-тести):
+◦
+Перевірка обробки некоректного/пошкодженого JSON у SharedPreferences (встановлення прапорця readError).
+◦
+Перевірка зчитування застарілого ключа symptom_history_v1 та збереження сумісності.
+3.
+test_main.py (Backend Unit/Integration-тести):
+◦
+Перевірка ендпоінту POST /analyze-symptom із порожнім рядком (422), лише пробілами (400) та некоректною довжиною.
+◦
+Перевірка нормалізації urgency у  ai_service.py на дозволені значення (звичайне, увага, терміново).
+Зупиняюся на цьому етапі й чекаю на ваші додаткові вказівки або підтвердження перед внесенням будь-яких змін.
