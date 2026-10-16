@@ -15,6 +15,13 @@ class SymptomResponseValidatorTest {
         }
     }
 
+    @Test fun acceptsNewCategoriesWithoutBreakingExistingHistory() {
+        listOf("травми та ушкодження", "серцево-судинне", "сечовидільне", "офтальмологічне",
+            "ЛОР", "стоматологічне", "алергічне", "психоемоційне", "репродуктивне").forEach {
+            assertTrue("Category $it", SymptomResponseValidator.isComplete(result.copy(category = it)))
+        }
+    }
+
     @Test fun rejectsNullAndBlankRequiredFields() {
         assertFalse(SymptomResponseValidator.isComplete(null))
         assertFalse(SymptomResponseValidator.isComplete(result.copy(category = "")))
