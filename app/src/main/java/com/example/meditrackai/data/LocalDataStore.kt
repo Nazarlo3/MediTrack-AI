@@ -13,7 +13,7 @@ import kotlinx.coroutines.withContext
 class LocalDataStore(context: Context, private val gson: Gson = Gson()) {
     private val prefs = context.getSharedPreferences("meditrack_prefs", Context.MODE_PRIVATE)
     private val legacyHistory = context.getSharedPreferences("meditrack_history_prefs", Context.MODE_PRIVATE)
-    private val mutex = Mutex()
+    private val historyCodec = HistoryJsonCodec(gson)
     private var history = emptyList<SymptomHistoryItem>()
     private var medications = emptyList<MedicationItem>()
     var readError: Boolean = false
@@ -21,13 +21,18 @@ class LocalDataStore(context: Context, private val gson: Gson = Gson()) {
 
     suspend fun load(): Pair<List<SymptomHistoryItem>, List<MedicationItem>> = mutex.withLock {
         withContext(Dispatchers.IO) {
-            val historyJson = prefs.getString("symptom_history", null)
+            val currentHistoryJson = prefs.getString("symptom_history_v2", null)
+            val historyJson = currentHistoryJson ?: prefs.getString("symptom_history", null)
                 ?: legacyHistory.getString("symptom_history_v1", null)
             val medicationJson = prefs.getString("medications_list_v2", null)
                 ?: prefs.getString("medications_list_v1", null)
             history = try {
-                gson.fromJson(historyJson, Array<SymptomHistoryItem>::class.java)
-                    ?.filterNotNull()?.take(20) ?: emptyList()
+                val decoded = historyCodec.decode(historyJson, legacy = currentHistoryJson == null)
+                if (currentHistoryJson == null && historyJson != null) {
+                    // Keep the old keys until the complete migrated list is committed.
+                    check(prefs.edit().putString("symptom_history_v2", historyCodec.encode(decoded)).commit())
+                }
+                decoded
             } catch (_: Exception) { readError = true; emptyList() }
             medications = try {
                 gson.fromJson(medicationJson, Array<MedicationItem>::class.java)
@@ -50,14 +55,23 @@ class LocalDataStore(context: Context, private val gson: Gson = Gson()) {
     suspend fun updateHistory(change: (List<SymptomHistoryItem>) -> List<SymptomHistoryItem>): List<SymptomHistoryItem>? = mutex.withLock {
         withContext(Dispatchers.IO) {
             if (readError) return@withContext null
-            val next = change(history).take(20)
-            val saved = prefs.edit().putString("symptom_history", gson.toJson(next)).commit()
+            val next = historyCodec.decode(historyCodec.encode(change(history)))
+            // Clear backup copies too, so a deleted history cannot reappear via fallback.
+            if (next.isEmpty() && !legacyHistory.edit().remove("symptom_history_v1").commit()) {
+                return@withContext null
+            }
+            val editor = prefs.edit().putString("symptom_history_v2", historyCodec.encode(next))
+            if (next.isEmpty()) editor.remove("symptom_history")
+            val saved = editor.commit()
             if (saved) {
                 history = next
-                if (next.isEmpty()) legacyHistory.edit().remove("symptom_history_v1").commit()
                 next
             } else null
         }
+    }
+
+    suspend fun getHistoryItem(id: String): SymptomHistoryItem? = mutex.withLock {
+        history.find { it.id == id }
     }
 
     suspend fun updateMedications(change: (List<MedicationItem>) -> List<MedicationItem>): List<MedicationItem>? = mutex.withLock {
@@ -70,5 +84,10 @@ class LocalDataStore(context: Context, private val gson: Gson = Gson()) {
                 next
             } else null
         }
+    }
+
+    private companion object {
+        // Reminder receivers create their own store: serialize migration across instances too.
+        val mutex = Mutex()
     }
 }

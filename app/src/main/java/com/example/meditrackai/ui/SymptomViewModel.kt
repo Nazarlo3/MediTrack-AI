@@ -11,6 +11,7 @@ import com.example.meditrackai.network.SymptomHistoryItem
 import com.example.meditrackai.network.SymptomRequest
 import com.example.meditrackai.network.SymptomResponse
 import com.example.meditrackai.validation.FormValidators
+import com.example.meditrackai.validation.SymptomResponseValidator
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +39,12 @@ class SymptomViewModel(application: Application) : AndroidViewModel(application)
     val uiState: StateFlow<SymptomUiState> = _uiState
     private val _historyState = MutableStateFlow<List<SymptomHistoryItem>>(emptyList())
     val historyState: StateFlow<List<SymptomHistoryItem>> = _historyState
+    private val _historyLoading = MutableStateFlow(true)
+    val historyLoading: StateFlow<Boolean> = _historyLoading
+    private val _historyUnavailable = MutableStateFlow(false)
+    val historyUnavailable: StateFlow<Boolean> = _historyUnavailable
+    private val _selectedHistory = MutableStateFlow<SymptomHistoryItem?>(null)
+    val selectedHistory: StateFlow<SymptomHistoryItem?> = _selectedHistory
     private val _medicationsState = MutableStateFlow<List<MedicationItem>>(emptyList())
     val medicationsState: StateFlow<List<MedicationItem>> = _medicationsState
     private val _storageError = MutableStateFlow<String?>(null)
@@ -50,9 +57,11 @@ class SymptomViewModel(application: Application) : AndroidViewModel(application)
                 val (history, medications) = store.load()
                 _historyState.value = history
                 _medicationsState.value = medications
+                _historyUnavailable.value = store.readError
                 if (store.readError) _storageError.value = "Не вдалося прочитати локальні дані. Збереження призупинено, щоб не втратити записи."
                 if (!store.readError) MedicationReminderScheduler(getApplication()).synchronize()
             } finally {
+                _historyLoading.value = false
                 initialized.complete(Unit)
             }
         }
@@ -110,6 +119,7 @@ class SymptomViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun checkSymptom(description: String) {
+        if (_uiState.value is SymptomUiState.Loading) return
         val trimmed = description.trim()
         FormValidators.symptomError(trimmed)?.let {
             _uiState.value = SymptomUiState.Error(it, canRetry = false)
@@ -122,10 +132,15 @@ class SymptomViewModel(application: Application) : AndroidViewModel(application)
                 val response = withContext(Dispatchers.IO) { ApiClient.api.analyzeSymptom(SymptomRequest(trimmed)) }
                 val result = response.body()
                 if (response.isSuccessful && result != null) {
+                    if (!SymptomResponseValidator.isComplete(result)) {
+                        _uiState.value = SymptomUiState.Error("Сервер повернув неповний або некоректний результат. Спробуйте ще раз.")
+                        return@launch
+                    }
+                    val receivedAt = System.currentTimeMillis()
                     _uiState.value = SymptomUiState.Success(result)
                     initialized.await()
-                    val time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-                    val item = SymptomHistoryItem(time, trimmed, result)
+                    val time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(receivedAt))
+                    val item = SymptomHistoryItem(time, trimmed, result, createdAt = receivedAt)
                     val updated = store.updateHistory { listOf(item) + it }
                     if (updated == null) _storageError.value = "Не вдалося зберегти історію перевірок."
                     else { _historyState.value = updated; _storageError.value = null }
@@ -154,9 +169,22 @@ class SymptomViewModel(application: Application) : AndroidViewModel(application)
             initialized.await()
             val updated = store.updateHistory { emptyList() }
             if (updated == null) _storageError.value = "Не вдалося очистити історію."
-            else { _historyState.value = updated; _storageError.value = null }
+            else {
+                _historyState.value = updated
+                _selectedHistory.value = null
+                _storageError.value = null
+            }
         }
     }
+
+    fun openHistoryItem(id: String) {
+        viewModelScope.launch {
+            initialized.await()
+            _selectedHistory.value = store.getHistoryItem(id)
+        }
+    }
+
+    fun closeHistoryItem() { _selectedHistory.value = null }
 
     fun reset() { _uiState.value = SymptomUiState.Idle }
 }

@@ -18,7 +18,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.meditrackai.network.SymptomHistoryItem
 import com.example.meditrackai.ui.theme.*
 
 @Composable
@@ -26,6 +25,9 @@ fun SymptomCheckScreen(viewModel: SymptomViewModel = viewModel()) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val history by viewModel.historyState.collectAsState()
+    val historyLoading by viewModel.historyLoading.collectAsState()
+    val historyUnavailable by viewModel.historyUnavailable.collectAsState()
+    val selectedHistory by viewModel.selectedHistory.collectAsState()
     val medications by viewModel.medicationsState.collectAsState()
     var selectedTab by rememberSaveable { mutableIntStateOf(1) }
     val tabStates = rememberSaveableStateHolder()
@@ -183,13 +185,16 @@ fun SymptomCheckScreen(viewModel: SymptomViewModel = viewModel()) {
                 }
             }
 
-            if (history.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(24.dp))
-                HistorySection(
-                    history = history,
-                    onClear = { viewModel.clearHistory() }
-                )
-            }
+            Spacer(modifier = Modifier.height(24.dp))
+            HistorySection(
+                history = history,
+                loading = historyLoading,
+                unavailable = historyUnavailable,
+                selectedItem = selectedHistory,
+                onOpen = viewModel::openHistoryItem,
+                onDismissDetails = viewModel::closeHistoryItem,
+                onClear = viewModel::clearHistory
+            )
             }
         } else {
             tabStates.SaveableStateProvider("medications") {
@@ -324,129 +329,6 @@ private fun SuccessCard(
                 text = disclaimer,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error
-            )
-        }
-    }
-}
-
-@Composable
-private fun HistorySection(
-    history: List<SymptomHistoryItem>,
-    onClear: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Історія перевірок (${history.size})",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                TextButton(onClick = onClear) {
-                    Text(
-                        text = "Очистити",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            history.forEach { item ->
-                key(item.timestamp + item.description) {
-                    HistoryCardItem(item = item)
-                    Spacer(modifier = Modifier.height(6.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun HistoryCardItem(item: SymptomHistoryItem) {
-    val isDark = isSystemInDarkTheme()
-    val safeUrgency = (item.response.urgency ?: "звичайне").lowercase()
-
-    val (urgencyColor, urgencyBg) = remember(safeUrgency, isDark) {
-        when {
-            safeUrgency.contains("терміново") -> Pair(
-                if (isDark) UrgencyUrgentTextDark else UrgencyUrgentTextLight,
-                if (isDark) UrgencyUrgentBgDark else UrgencyUrgentBgLight
-            )
-            safeUrgency.contains("увага") -> Pair(
-                if (isDark) UrgencyWarningTextDark else UrgencyWarningTextLight,
-                if (isDark) UrgencyWarningBgDark else UrgencyWarningBgLight
-            )
-            else -> Pair(
-                if (isDark) UrgencyNormalTextDark else UrgencyNormalTextLight,
-                if (isDark) UrgencyNormalBgDark else UrgencyNormalBgLight
-            )
-        }
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = item.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = item.timestamp,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "Категорія: ${item.response.category} • ",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Box(
-                    modifier = Modifier
-                        .background(urgencyBg, shape = RoundedCornerShape(4.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = item.response.urgency ?: "звичайне",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = urgencyColor,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = item.response.explanation,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }

@@ -20,7 +20,10 @@ data class SymptomResponse(
 data class SymptomHistoryItem(
     val timestamp: String,
     val description: String,
-    val response: SymptomResponse
+    val response: SymptomResponse,
+    val id: String = UUID.randomUUID().toString(),
+    val createdAt: Long? = null,
+    val status: String = "готово"
 )
 
 @Immutable
