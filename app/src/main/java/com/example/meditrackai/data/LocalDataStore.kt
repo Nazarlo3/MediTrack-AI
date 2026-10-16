@@ -52,16 +52,20 @@ class LocalDataStore(context: Context, private val gson: Gson = Gson()) {
         }
     }
 
-    suspend fun updateHistory(change: (List<SymptomHistoryItem>) -> List<SymptomHistoryItem>): List<SymptomHistoryItem>? = mutex.withLock {
+    suspend fun updateHistory(
+        removeLegacyCopies: Boolean = false,
+        change: (List<SymptomHistoryItem>) -> List<SymptomHistoryItem>
+    ): List<SymptomHistoryItem>? = mutex.withLock {
         withContext(Dispatchers.IO) {
             if (readError) return@withContext null
             val next = historyCodec.decode(historyCodec.encode(change(history)))
             // Clear backup copies too, so a deleted history cannot reappear via fallback.
-            if (next.isEmpty() && !legacyHistory.edit().remove("symptom_history_v1").commit()) {
+            val discardLegacy = next.isEmpty() || removeLegacyCopies
+            if (discardLegacy && !legacyHistory.edit().remove("symptom_history_v1").commit()) {
                 return@withContext null
             }
             val editor = prefs.edit().putString("symptom_history_v2", historyCodec.encode(next))
-            if (next.isEmpty()) editor.remove("symptom_history")
+            if (discardLegacy) editor.remove("symptom_history")
             val saved = editor.commit()
             if (saved) {
                 history = next
@@ -73,6 +77,9 @@ class LocalDataStore(context: Context, private val gson: Gson = Gson()) {
     suspend fun getHistoryItem(id: String): SymptomHistoryItem? = mutex.withLock {
         history.find { it.id == id }
     }
+
+    suspend fun deleteHistoryItem(id: String): List<SymptomHistoryItem>? =
+        updateHistory(removeLegacyCopies = true) { items -> items.filterNot { it.id == id } }
 
     suspend fun updateMedications(change: (List<MedicationItem>) -> List<MedicationItem>): List<MedicationItem>? = mutex.withLock {
         withContext(Dispatchers.IO) {

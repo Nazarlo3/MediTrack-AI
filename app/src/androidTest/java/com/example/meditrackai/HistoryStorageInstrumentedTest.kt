@@ -109,4 +109,35 @@ class HistoryStorageInstrumentedTest {
         assertFalse(prefs.contains("symptom_history_v2"))
         assertEquals(legacy, prefs.getString("symptom_history", null))
     }
+
+    @Test fun deleteOneOfIdenticalRecordsPreservesOtherAfterReopenAndRemovesBackups() = runBlocking {
+        val record = legacy.removePrefix("[").removeSuffix("]")
+        val oldRecords = "[$record,$record]"
+        val prefs = context.getSharedPreferences("meditrack_prefs", Context.MODE_PRIVATE)
+        val oldPrefs = context.getSharedPreferences("meditrack_history_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putString("symptom_history", oldRecords).commit()
+        oldPrefs.edit().putString("symptom_history_v1", oldRecords).commit()
+        val store = LocalDataStore(context)
+        val original = store.load().first
+        assertEquals(2, original.size)
+        assertNotEquals(original[0].id, original[1].id)
+        assertEquals(listOf(original[1]), store.deleteHistoryItem(original[0].id))
+        assertFalse(prefs.contains("symptom_history"))
+        assertFalse(oldPrefs.contains("symptom_history_v1"))
+        val reopened = LocalDataStore(context)
+        assertEquals(listOf(original[1]), reopened.load().first)
+        assertNull(reopened.getHistoryItem(original[0].id))
+        assertEquals(original[1], reopened.getHistoryItem(original[1].id))
+        assertEquals(emptyList<SymptomHistoryItem>(), reopened.deleteHistoryItem(original[1].id))
+        assertTrue(LocalDataStore(context).load().first.isEmpty())
+    }
+
+    @Test fun deletingUnknownIdLeavesSavedRecordsUntouched() = runBlocking {
+        val store = LocalDataStore(context)
+        store.load()
+        val item = SymptomHistoryItem("12:00", "Синтетичний опис", SymptomResponse("інше", "Результат"), createdAt = 1000)
+        store.updateHistory { listOf(item) }
+        assertEquals(listOf(item), store.deleteHistoryItem("not-an-existing-id"))
+        assertEquals(listOf(item), LocalDataStore(context).load().first)
+    }
 }

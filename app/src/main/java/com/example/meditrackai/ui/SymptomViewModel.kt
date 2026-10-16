@@ -184,6 +184,19 @@ class SymptomViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun deleteHistoryItem(id: String) {
+        viewModelScope.launch {
+            initialized.await()
+            val updated = store.deleteHistoryItem(id)
+            if (updated == null) _storageError.value = "Не вдалося видалити запис історії. Спробуйте ще раз."
+            else {
+                _historyState.value = updated
+                if (_selectedHistory.value?.id == id) _selectedHistory.value = null
+                _storageError.value = null
+            }
+        }
+    }
+
     fun closeHistoryItem() { _selectedHistory.value = null }
 
     fun reset() { _uiState.value = SymptomUiState.Idle }

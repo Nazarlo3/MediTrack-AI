@@ -26,9 +26,12 @@ internal fun HistorySection(
     selectedItem: SymptomHistoryItem?,
     onOpen: (String) -> Unit,
     onDismissDetails: () -> Unit,
-    onClear: () -> Unit
+    onClear: () -> Unit,
+    onDelete: (String) -> Unit
 ) {
     var confirmClear by rememberSaveable { mutableStateOf(false) }
+    var deleteId by rememberSaveable { mutableStateOf<String?>(null) }
+    val deleteTarget = history.find { it.id == deleteId }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -57,7 +60,8 @@ internal fun HistorySection(
                     style = MaterialTheme.typography.bodyMedium)
                 else -> history.forEach { item ->
                     key(item.id) {
-                        HistoryCardItem(item, onClick = { onOpen(item.id) })
+                        HistoryCardItem(item, onClick = { onOpen(item.id) },
+                            onDelete = { deleteId = item.id })
                         Spacer(Modifier.height(8.dp))
                     }
                 }
@@ -77,11 +81,31 @@ internal fun HistorySection(
             dismissButton = { TextButton(onClick = { confirmClear = false }) { Text("Скасувати") } }
         )
     }
-    if (selectedItem != null) HistoryDetailsDialog(selectedItem, onDismissDetails)
+    if (deleteTarget != null) {
+        AlertDialog(
+            onDismissRequest = { deleteId = null },
+            title = { Text("Видалити цей запис?") },
+            text = { Column {
+                Text(deleteTarget.description, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.height(8.dp))
+                Text("Буде видалено лише цю перевірку. Інші записи залишаться. Скасувати видалення неможливо.")
+            } },
+            confirmButton = {
+                TextButton(onClick = { deleteId = null; onDelete(deleteTarget.id) },
+                    enabled = !loading && !unavailable) { Text("Так, видалити") }
+            },
+            dismissButton = { TextButton(onClick = { deleteId = null }) { Text("Скасувати") } }
+        )
+    }
+    if (selectedItem != null && deleteTarget == null) {
+        HistoryDetailsDialog(selectedItem, onDismissDetails,
+            canDelete = !loading && !unavailable && history.any { it.id == selectedItem.id },
+            onDelete = { deleteId = selectedItem.id })
+    }
 }
 
 @Composable
-private fun HistoryCardItem(item: SymptomHistoryItem, onClick: () -> Unit) {
+private fun HistoryCardItem(item: SymptomHistoryItem, onClick: () -> Unit, onDelete: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -98,14 +122,21 @@ private fun HistoryCardItem(item: SymptomHistoryItem, onClick: () -> Unit) {
             Spacer(Modifier.height(6.dp))
             Text(item.response.explanation, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodySmall)
-            Text("Відкрити деталі", style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                TextButton(onClick = onClick, modifier = Modifier.weight(1f)) { Text("Відкрити деталі") }
+                TextButton(onClick = onDelete) { Text("Видалити", color = MaterialTheme.colorScheme.error) }
+            }
         }
     }
 }
 
 @Composable
-private fun HistoryDetailsDialog(item: SymptomHistoryItem, onDismiss: () -> Unit) {
+private fun HistoryDetailsDialog(
+    item: SymptomHistoryItem,
+    onDismiss: () -> Unit,
+    canDelete: Boolean,
+    onDelete: () -> Unit
+) {
     // A different record starts at the top; long descriptions remain readable on small screens.
     key(item.id) {
         AlertDialog(
@@ -128,7 +159,12 @@ private fun HistoryDetailsDialog(item: SymptomHistoryItem, onDismiss: () -> Unit
                     Text(item.response.disclaimer, color = MaterialTheme.colorScheme.error)
                 }
             },
-            confirmButton = { TextButton(onClick = onDismiss) { Text("Закрити") } }
+            confirmButton = { TextButton(onClick = onDismiss) { Text("Закрити") } },
+            dismissButton = {
+                TextButton(onClick = onDelete, enabled = canDelete) {
+                    Text("Видалити запис", color = MaterialTheme.colorScheme.error)
+                }
+            }
         )
     }
 }

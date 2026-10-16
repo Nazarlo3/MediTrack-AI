@@ -193,7 +193,8 @@ fun SymptomCheckScreen(viewModel: SymptomViewModel = viewModel()) {
                 selectedItem = selectedHistory,
                 onOpen = viewModel::openHistoryItem,
                 onDismissDetails = viewModel::closeHistoryItem,
-                onClear = viewModel::clearHistory
+                onClear = viewModel::clearHistory,
+                onDelete = viewModel::deleteHistoryItem
             )
             }
         } else {
