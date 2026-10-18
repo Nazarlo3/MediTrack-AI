@@ -1,0 +1,15 @@
+# Підготовка оновлення 0.3
+
+## 18.10.2026
+
+- Зібрано попередні зміни ліків, тем, AI-уточнень, скасування аналізу та архітектури ЛР5 в одну версію.
+- Версія Android: 0.3 / versionCode 3. Старий реліз 0.2 не змінюється.
+- APK готується локально; фактичні перевірки й результат коміту додаються після виконання.
+
+## Перевірки перед комітом
+
+- :app:testDebugUnitTest :app:lintDebug :app:assembleRelease — BUILD SUCCESSFUL in 1m 27s. Unit-задача UP-TO-DATE: останні 57 тестів без failures/errors/skipped; source Kotlin/test логіка після попереднього успішного запуску не змінювалася. Lint: 0 errors, 50 warnings.
+- Backend: 29 тестів OK (0.120 с), fake/mock; живий AI повторно не викликався. Залишилося відоме StarletteDeprecationWarning для HTTPX TestClient.
+- APK: 0.3 / versionCode 3, 2 724 349 байтів; apksigner verify успішний, сертифікат SHA-256 тотожний опублікованому 0.2, debuggable=false. Метадані/контрольна сума — локально в .artifacts/release-v0.3.
+- Новий release на телефон не встановлювався: користувачеві залишено debug. Push, публікація GitHub Release і deploy не виконуються в локальному кроці підготовки.
+- Перед фіксацією відібрано 78 файлів app/backend/docs/README. Перевірка реальних значень секретів та типових токенів у staged-коді не виявила збігів. Звіти, скриншоти, .artifacts, signing/keystore/.env і локальні .idea не додані; staged diff --check успішний.

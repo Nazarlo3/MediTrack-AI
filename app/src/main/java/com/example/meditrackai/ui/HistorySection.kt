@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.example.meditrackai.network.SymptomHistoryItem
+import com.example.meditrackai.domain.symptoms.SymptomHistoryEntry
 import com.example.meditrackai.ui.theme.*
 import java.time.Instant
 import java.time.ZoneId
@@ -20,10 +20,10 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 internal fun HistorySection(
-    history: List<SymptomHistoryItem>,
+    history: List<SymptomHistoryEntry>,
     loading: Boolean,
     unavailable: Boolean,
-    selectedItem: SymptomHistoryItem?,
+    selectedItem: SymptomHistoryEntry?,
     onOpen: (String) -> Unit,
     onDismissDetails: () -> Unit,
     onClear: () -> Unit,
@@ -105,7 +105,7 @@ internal fun HistorySection(
 }
 
 @Composable
-private fun HistoryCardItem(item: SymptomHistoryItem, onClick: () -> Unit, onDelete: () -> Unit) {
+private fun HistoryCardItem(item: SymptomHistoryEntry, onClick: () -> Unit, onDelete: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -118,7 +118,7 @@ private fun HistoryCardItem(item: SymptomHistoryItem, onClick: () -> Unit, onDel
             Text("Статус: ${item.status}", style = MaterialTheme.typography.labelSmall)
             Spacer(Modifier.height(6.dp))
             Text("Категорія: ${item.response.category}", style = MaterialTheme.typography.bodySmall)
-            HistoryUrgency(item.response.urgency ?: "звичайне")
+            HistoryUrgency(item.response.urgency)
             Spacer(Modifier.height(6.dp))
             Text(item.response.explanation, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodySmall)
@@ -132,7 +132,7 @@ private fun HistoryCardItem(item: SymptomHistoryItem, onClick: () -> Unit, onDel
 
 @Composable
 private fun HistoryDetailsDialog(
-    item: SymptomHistoryItem,
+    item: SymptomHistoryEntry,
     onDismiss: () -> Unit,
     canDelete: Boolean,
     onDelete: () -> Unit
@@ -152,9 +152,10 @@ private fun HistoryDetailsDialog(
                     Text(item.description)
                     Spacer(Modifier.height(12.dp))
                     Text("Категорія: ${item.response.category}", fontWeight = FontWeight.SemiBold)
-                    HistoryUrgency(item.response.urgency ?: "звичайне")
+                    HistoryUrgency(item.response.urgency)
                     Spacer(Modifier.height(8.dp))
                     Text(item.response.explanation)
+                    item.response.followUpQuestion?.let { Text("Уточнення: " + it) }
                     Spacer(Modifier.height(12.dp))
                     Text(item.response.disclaimer, color = MaterialTheme.colorScheme.error)
                 }
@@ -171,7 +172,7 @@ private fun HistoryDetailsDialog(
 
 @Composable
 private fun HistoryUrgency(urgency: String) {
-    val dark = isSystemInDarkTheme()
+    val dark = LocalAppDarkTheme.current
     val (foreground, background) = when (urgency) {
         "терміново" -> (if (dark) UrgencyUrgentTextDark else UrgencyUrgentTextLight) to
             (if (dark) UrgencyUrgentBgDark else UrgencyUrgentBgLight)
@@ -186,7 +187,7 @@ private fun HistoryUrgency(urgency: String) {
     }
 }
 
-private fun historyDateLabel(item: SymptomHistoryItem): String = item.createdAt?.let {
+private fun historyDateLabel(item: SymptomHistoryEntry): String = item.createdAt?.let {
     DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
         .format(Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()))
 } ?: "Дата невідома • ${item.timestamp}"

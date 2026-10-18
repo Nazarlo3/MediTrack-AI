@@ -1,5 +1,7 @@
 package com.example.meditrackai.ui
 
+import androidx.compose.foundation.verticalScroll
+
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -38,6 +40,11 @@ import com.example.meditrackai.network.MedicationItem
 import com.example.meditrackai.validation.FormValidators
 import com.example.meditrackai.reminders.MedicationReminderScheduler
 import com.example.meditrackai.reminders.MedicationSchedule
+import com.example.meditrackai.ui.theme.LocalAppDarkTheme
+import com.example.meditrackai.ui.theme.UrgencyNormalBgDark
+import com.example.meditrackai.ui.theme.UrgencyNormalBgLight
+import com.example.meditrackai.ui.theme.UrgencyNormalTextDark
+import com.example.meditrackai.ui.theme.UrgencyNormalTextLight
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -85,9 +92,25 @@ private val formSaver = listSaver<AddMedicationFormState, String>(
 fun MedicationSection(
     medications: List<MedicationItem>,
     onAddMedication: suspend (name: String, dosage: String, photoUri: String?, days: List<String>, mealSlot: String, endDate: String) -> Boolean,
-    onToggleStatus: (id: String) -> Unit,
-    onDeleteMedication: (id: String) -> Unit
+    onToggleStatus: (id: String, time: String) -> Unit,
+    onDeleteMedication: (id: String) -> Unit,
+    onEditMedication: suspend (MedicationItem) -> Boolean
 ) {
+    var editingId by rememberSaveable { mutableStateOf<String?>(null) }
+    val editingItem = medications.find { it.id == editingId }
+    if (editingItem != null) {
+        AlertDialog(onDismissRequest = { editingId = null },
+            title = { Text("Редагувати препарат") },
+            text = { Column(Modifier.heightIn(max = 500.dp).verticalScroll(rememberScrollState())) {
+                AddMedicationCard(editingItem = editingItem, onAddMedication = { name, dosage, photo, days, slot, end ->
+                    val saved = onEditMedication(editingItem.copy(name = name, dosage = dosage, photoUri = photo,
+                        daysOfWeek = days, mealSlot = slot, endDate = end,
+                        times = FormValidators.parseTimes(slot.substringBefore(" ("))))
+                    if (saved) editingId = null
+                    saved
+                })
+            } }, confirmButton = { TextButton(onClick = { editingId = null }) { Text("Закрити") } })
+    }
     Column(modifier = Modifier.fillMaxWidth()) {
         ReminderAccessCard(medications)
         Spacer(modifier = Modifier.height(12.dp))
@@ -111,7 +134,8 @@ fun MedicationSection(
                     MedicationCardItem(
                         item = item,
                         onToggleStatus = onToggleStatus,
-                        onDeleteMedication = onDeleteMedication
+                        onDeleteMedication = onDeleteMedication,
+                        onEdit = { editingId = item.id }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
@@ -166,6 +190,7 @@ private fun ReminderAccessCard(medications: List<MedicationItem>) {
 
 @Composable
 fun AddMedicationCard(
+    editingItem: MedicationItem? = null,
     onAddMedication: suspend (name: String, dosage: String, photoUri: String?, days: List<String>, mealSlot: String, endDate: String) -> Boolean
 ) {
     val defaultEndDate = remember {
@@ -173,7 +198,17 @@ fun AddMedicationCard(
         SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(nextWeek)
     }
 
-    val formState = rememberSaveable(saver = formSaver) { AddMedicationFormState(defaultEndDate) }
+    val formState = rememberSaveable(editingItem?.id, saver = formSaver) {
+        AddMedicationFormState(editingItem?.endDate ?: defaultEndDate).apply {
+            if (editingItem != null) {
+                nameText = editingItem.name; dosageText = editingItem.dosage
+                timeText = MedicationSchedule.times(editingItem).orEmpty().joinToString(", ")
+                mealSlotText = editingItem.mealSlot.substringAfter("(", "Після їжі").substringBeforeLast(")")
+                daysText = editingItem.daysOfWeek.joinToString(", ")
+                selectedPhotoUri = PhotoStorage.getUriFromPathOrContent(editingItem.photoUri)
+            }
+        }
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -182,7 +217,7 @@ fun AddMedicationCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Додати новий препарат",
+                text = if (editingItem == null) "Додати новий препарат" else "Дані препарату",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Bold
@@ -233,7 +268,7 @@ fun AddMedicationCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Section 4: Photo & Save
-            PhotoAndSaveRowSection(formState = formState, onAddMedication = onAddMedication)
+            PhotoAndSaveRowSection(formState = formState, originalPhoto = editingItem?.photoUri, onAddMedication = onAddMedication)
         }
     }
 }
@@ -314,7 +349,7 @@ private fun DosageFieldSection(formState: AddMedicationFormState) {
 private fun TimeFieldSection(formState: AddMedicationFormState) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "Година:",
+            text = "Часи прийому (можна кілька):",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -327,8 +362,11 @@ private fun TimeFieldSection(formState: AddMedicationFormState) {
         ) {
             QUICK_TIMES.forEach { item ->
                 FilterChip(
-                    selected = formState.timeText == item,
-                    onClick = { formState.timeText = item },
+                    selected = item in FormValidators.parseTimes(formState.timeText).orEmpty(),
+                    onClick = {
+                        val values = FormValidators.parseTimes(formState.timeText).orEmpty()
+                        formState.timeText = (if (item in values && values.size > 1) values - item else (values + item).distinct()).sorted().joinToString(", ")
+                    },
                     label = { Text(item, style = MaterialTheme.typography.labelMedium) }
                 )
             }
@@ -336,8 +374,8 @@ private fun TimeFieldSection(formState: AddMedicationFormState) {
         OutlinedTextField(
             value = formState.timeText,
             onValueChange = { formState.timeText = it },
-            label = { Text("Точний час") },
-            placeholder = { Text("08:00") },
+            label = { Text("Часи через кому") },
+            placeholder = { Text("08:00, 20:00") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             shape = RoundedCornerShape(12.dp)
@@ -448,6 +486,7 @@ private fun EndDateFieldSection(formState: AddMedicationFormState) {
 @Composable
 private fun PhotoAndSaveRowSection(
     formState: AddMedicationFormState,
+    originalPhoto: String?,
     onAddMedication: suspend (name: String, dosage: String, photoUri: String?, days: List<String>, mealSlot: String, endDate: String) -> Boolean
 ) {
     val context = LocalContext.current
@@ -465,10 +504,9 @@ private fun PhotoAndSaveRowSection(
 
     val previewBitmap = rememberSampledBitmap(context, formState.selectedPhotoUri?.toString(), reqWidth = 120, reqHeight = 120)
 
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedButton(
@@ -516,7 +554,8 @@ private fun PhotoAndSaveRowSection(
                 formState.isSaving = true
                 coroutineScope.launch {
                     try {
-                        val savedPath = photoUri?.let { uri -> PhotoStorage.savePhotoToInternalStorage(context, uri) }
+                        val samePhoto = photoUri == null || photoUri.toString() == PhotoStorage.getUriFromPathOrContent(originalPhoto)?.toString()
+                        val savedPath = if (samePhoto) originalPhoto else photoUri?.let { uri -> PhotoStorage.savePhotoToInternalStorage(context, uri) }
                         if (photoUri != null && savedPath == null) {
                             formState.errorMessage = "Не вдалося зберегти фото. Оберіть його ще раз."
                             return@launch
@@ -525,7 +564,10 @@ private fun PhotoAndSaveRowSection(
                         if (saved) {
                             formState.selectedPhotoUri = null
                             formState.errorMessage = null
-                        } else formState.errorMessage = "Не вдалося зберегти препарат. Спробуйте ще раз."
+                        } else {
+                            if (!samePhoto) PhotoStorage.deletePhotoFromInternalStorage(context, savedPath)
+                            formState.errorMessage = "Не вдалося зберегти препарат. Спробуйте ще раз."
+                        }
                     } catch (e: CancellationException) {
                         throw e
                     } finally {
@@ -534,7 +576,7 @@ private fun PhotoAndSaveRowSection(
                 }
             },
             enabled = !formState.isSaving,
-            modifier = Modifier.height(48.dp),
+            modifier = Modifier.fillMaxWidth().height(48.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(if (formState.isSaving) "Зберігаємо..." else "Зберегти", style = MaterialTheme.typography.titleSmall)
@@ -545,150 +587,54 @@ private fun PhotoAndSaveRowSection(
 @Composable
 fun MedicationCardItem(
     item: MedicationItem,
-    onToggleStatus: (id: String) -> Unit,
-    onDeleteMedication: (id: String) -> Unit
+    onToggleStatus: (id: String, time: String) -> Unit,
+    onDeleteMedication: (id: String) -> Unit,
+    onEdit: () -> Unit
 ) {
     val context = LocalContext.current
-    val itemBitmap = rememberSampledBitmap(context, item.photoUri, reqWidth = 144, reqHeight = 144)
+    val bitmap = rememberSampledBitmap(context, item.photoUri, reqWidth = 144, reqHeight = 144)
     var today by remember { mutableStateOf(LocalDate.now().toString()) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(30_000)
-            today = LocalDate.now().toString()
-        }
-    }
-    val takenToday = item.isTakenOn(today)
-
-    val cardBg = if (takenToday) {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
-    } else {
-        MaterialTheme.colorScheme.surface
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = cardBg),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                if (itemBitmap != null) {
-                    Image(
-                        bitmap = itemBitmap,
-                        contentDescription = "Фото ліків",
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(12.dp)),
-                        contentScale = ContentScale.Crop
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .background(
-                                MaterialTheme.colorScheme.primaryContainer,
-                                shape = RoundedCornerShape(12.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("💊", style = MaterialTheme.typography.titleMedium)
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
+    LaunchedEffect(Unit) { while (true) { delay(30_000); today = LocalDate.now().toString() } }
+    val clocks = MedicationSchedule.times(item).orEmpty().map { it.toString() }
+    val allTaken = clocks.isNotEmpty() && clocks.all { item.isDoseTakenOn(it, today) }
+    val takenBackground = if (LocalAppDarkTheme.current) UrgencyNormalBgDark else UrgencyNormalBgLight
+    val takenForeground = if (LocalAppDarkTheme.current) UrgencyNormalTextDark else UrgencyNormalTextLight
+    Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (allTaken) takenBackground else MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = if (allTaken) takenForeground else MaterialTheme.colorScheme.onSurfaceVariant
+        )) {
+        Column(Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (bitmap != null) Image(bitmap, "Фото ліків", Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)), contentScale = ContentScale.Crop)
+                Column(Modifier.weight(1f).padding(start = if (bitmap != null) 12.dp else 0.dp)) {
+                    Text(item.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(item.dosage, style = MaterialTheme.typography.bodyMedium)
                 }
-
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = item.name,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                    shape = RoundedCornerShape(6.dp)
-                                )
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = item.dosage,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = "🔔 ${item.mealSlot}",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(modifier = Modifier.height(2.dp))
-
-                    Text(
-                        text = "📅 ${item.daysOfWeek.joinToString(", ")} • ⏳ До: ${item.endDate}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    val scheduleProblem = when {
-                        MedicationSchedule.time(item) == null -> "Нагадування не заплановано: немає коректного часу. Додайте препарат із часом ГГ:ХХ."
-                        MedicationSchedule.days(item) == null || MedicationSchedule.end(item) == null -> "Нагадування не заплановано: перевірте дні та кінцеву дату."
-                        MedicationSchedule.end(item)!!.isBefore(LocalDate.now()) -> "Курс завершено — нагадування вимкнені."
-                        else -> null
-                    }
-                    if (scheduleProblem != null) Text(scheduleProblem, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                TextButton(onClick = onEdit) { Text("Змінити") }
+                IconButton(onClick = { onDeleteMedication(item.id) }) {
+                    Icon(Icons.Default.Delete, "Видалити препарат", tint = MaterialTheme.colorScheme.error)
                 }
             }
-
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.Center
-            ) {
-                // Status Toggle Button
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(
-                            if (takenToday) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
-                        )
-                        .clickable { onToggleStatus(item.id) }
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    Text(
-                        text = if (takenToday) "Прийнято ✅" else "Випити ⏰",
-                        color = if (takenToday) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onPrimary,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(2.dp))
-
-                // Delete Button with Material Icon & Touch Area >= 48dp
-                IconButton(
-                    onClick = { onDeleteMedication(item.id) },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Видалити",
-                        tint = MaterialTheme.colorScheme.error
-                    )
+            Text(item.mealSlot.substringAfter("(", item.mealSlot).substringBeforeLast(")"), style = MaterialTheme.typography.bodySmall)
+            Text("${item.daysOfWeek.joinToString(", ")} • До ${item.endDate}", style = MaterialTheme.typography.labelMedium)
+            val problem = when {
+                clocks.isEmpty() -> "Немає коректного часу. Натисніть «Змінити» й задайте графік."
+                MedicationSchedule.days(item) == null || MedicationSchedule.end(item) == null -> "Перевірте дні й кінцеву дату курсу."
+                MedicationSchedule.end(item)!!.isBefore(LocalDate.now()) -> "Курс завершено — нагадування вимкнені."
+                else -> null
+            }
+            if (problem != null) Text(problem, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            clocks.forEach { time ->
+                val taken = item.isDoseTakenOn(time, today)
+                Row(Modifier.fillMaxWidth()
+                    .background(if (taken) takenBackground else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(10.dp))
+                    .padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(time, modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
+                    TextButton(onClick = { onToggleStatus(item.id, time) },
+                        colors = ButtonDefaults.textButtonColors(contentColor = if (taken) takenForeground else MaterialTheme.colorScheme.primary)) {
+                        Text(if (taken) "Прийнято ✓" else "Позначити прийнятим")
+                    }
                 }
             }
         }

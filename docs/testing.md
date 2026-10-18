@@ -207,3 +207,57 @@ adb shell am instrument -w -r -e class com.example.meditrackai.HistoryStorageIns
 Цей прогін не перевіряв новий HTTP/AI-запит, мережевий збій чи доставку нагадувань; для них лишаються окремі попередні свідчення й тести.
 
 LiveHistoryReportTest запускається лише з явним аргументом `reportPhase=before` або `after`; у звичайному прогоні на чистому пристрої цей read-only тест знімків пропускається, щоб не вимагати наявності користувацької історії. Для відтворення знімків передати клас через `adb shell am instrument -w -r -e class com.example.meditrackai.LiveHistoryReportTest -e reportPhase before com.example.meditrackai.test/androidx.test.runner.AndroidJUnitRunner`; після force-stop повторити з `reportPhase after`. Синтетичний HistoryReportScreenshotsTest працює без користувацьких записів.
+
+## 17.10.2026 — ЛР5 варіант Б
+
+Послідовність виконана до/після зміни архітектури:
+1. До рефакторингу: 15 backend-тестів — OK (1.277 с).
+2. Після domain/service/provider/DI, **до request_id**: 21 тест — OK (0.113 с).
+3. Після контрольного розширення: 29 тестів — OK (0.151 с), без failures/skips.
+
+Команди: спочатку python -m unittest discover -s backend/tests -v; для HTTP-тестів — Python із залежностями backend/requirements-dev.txt. Фактичне ізольоване середовище: .artifacts/lab5-venv із system-site-packages; до нього додані httpx 0.28.1 і httpcore 1.0.9, глобальні пакети не змінювалися. Runtime requirements.txt не змінено.
+
+Покриття: попередні 15 regression-тестів адаптовані до ін’єктованого service; 6 AnalysisServiceTests перевіряють fake/помилку/валідацію/контекст та дві реалізації Protocol; 8 ApiTests проходять HTTP-шлях ASGI, DI override, шість JSON-полів, 400/422/503/500, конфігурацію реального адаптера з mock requests, відсутній ключ, унікальний request_id і його збіг із логами без приватних маркерів.
+
+Окрема **ручна інтеграційна перевірка** поза unit suite: локальний FastAPI TestClient → справжній Groq, один синтетичний опис. Результат: HTTP 200; набір полів/категорія/urgency та X-Request-ID коректні. Це не Android → Render → Groq, не перевірка медичної точності й не новий deploy.
+
+Для демонстрації фактичні відповіді TestClient із FakeProvider (200/503) збережено локально; знімки у docs/various files/screenshot/ЛР5. Вони явно позначені як синтетичні, не є відповідями живого AI або скриншотами телефона.
+
+Попередження середовища: StarletteDeprecationWarning про використання HTTPX у TestClient. Фінальний набір успішний; міграцію на інший клієнт/версії не виконували. Android-збірки й тести в цій задачі не запускалися. Чужі зміни, медичні записи та ключі не змінювались.
+
+## 17.10.2026 — ЛР5, варіант А Android (feature_13)
+
+- Baseline: :app:testDebugUnitTest — BUILD SUCCESSFUL (23 с), попередні 39 unit-тестів.
+- Checkpoint після repository/use case/mapper/DI та **до скасування**: та сама задача — BUILD SUCCESSFUL (15 с), 54 тести, 0 failures/errors/skipped.
+- Після контрольного розширення виконано :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:compileDebugAndroidTestKotlin — BUILD SUCCESSFUL (36 с). XML: **57 тестів, 0 failures/errors/skipped**. Lint: **0 errors, 50 warnings**; залишається, зокрема, застарілий TabRow.
+
+Нові перевірки: AnalyzeSymptomUseCaseTest — 4 (нормалізація/межі, контекст і накопичений опис); SymptomRepositoryTest — 6 (mapping API/storage, HTTP/IO, некоректний результат, context_used, cancellation, помилки сховища); SymptomAnalysisControllerTest — 8 (Idle/Loading/Success/Error, retry з тим самим контекстом, історія/видалення, окрема помилка запису, cancellation). Разом 18 нових; попередні 39 залишилися успішними.
+
+FakeSymptomRepository — друга реалізація інтерфейсу в src/test, без мережі/Android. Тести скасування навмисно моделюють provider, який повертає успіх або помилку після cancel: пізня відповідь не змінює поточний UI й не додає історію. Скасування уточнення повертає попередній Success; повтор зберігає контекст. Старі codec-тести й repository round trip перевіряють збереження ID, nullable-дати та старого формату; це не нова міграція.
+
+Адаптовано фікстури HistorySectionInstrumentedTest і HistoryReportScreenshotsTest до domain UI. Android-тести **лише скомпільовано**, не запускали на пристрої. Не перевірено новий UI кнопки/чернеток, конфігураційний поворот, завершення процесу або реальний Android → Render → Groq після цих змін. APK зібрано для перевірки, не встановлено; release не збирався. Backend у цій задачі не змінювався й повторно не тестувався.
+
+Мінімальний ручний сценарій наступного запуску: почати синтетичний аналіз → скасувати → перевірити збережений ввід і відсутність запису; виконати успішний аналіз → надіслати уточнення → скасувати → перевірити попередній результат і чернетку; повторити успішно й відкрити новий запис історії.
+
+## 17.10.2026 — ЛР5, feature_14: фізичний телефон
+
+Після підтвердження користувача поточний debug APK та test APK встановлено через Wi-Fi ADB, adb install -r, без видалення/очищення застосунку. Xiaomi, модель 23030RAC7Y, Android 15 (API 35). SHA-256 debug APK: 9098a12d8da6b9bb183880cee64f1c06debd2c70faa06983d103d77356cd51a4.
+
+Додано opt-in Lab5PhoneScenarioTest. Усі приклади синтетичні, SharedPreferences із префіксом окремі; справжні Screen/ViewModel/use case/repository/Retrofit працюють із локальним оновленим FastAPI → Groq через ADB reverse. Production BASE_URL і серверний код не змінювалися.
+
+Три різні сценарії:
+1. liveAnalysisClarificationAndPersistentHistory — справжній аналіз і уточнення з context_used=true, збереження двох записів, повторне читання новим LocalDataStore, відкриття деталей за ID.
+2. controlledNetworkErrorAndRealRetry — контрольована IOException до HTTP-виклику, порожня історія при помилці, реальний повтор через Groq без втрати опису.
+3. cancelInitialAndClarificationKeepsDraftsAndHistory — затримка на API-межі до відправлення, cancel початкового запиту → Idle/збережений ввід/немає історії; cancel уточнення → попередній Success/чернетка/один незмінений запис.
+
+Початковий прогін 15.746 с: 2 успіхи й 1 помилка **тестового селектора**, оскільки пояснення одночасно є в результаті та історії. Виправлено тільки селектор; повторено лише liveAnalysisClarificationAndPersistentHistory — OK (1 test), 9.299 с. Підсумок: три різні сценарії успішно виконано; не приписувати цьому єдиний фінальний OK (3 tests). Дві збірки лише test APK: BUILD SUCCESSFUL (7 с і 4 с); попередні 57 JVM/29 backend тестів повторно не запускали.
+
+Три PNG у локальному docs/various files/screenshot/ЛР5 переглянуто; до звіту достатньо success/error, cancel — за потреби. Це знімки Compose-контенту на фізичному телефоні, з тестовою позначкою синтетичних даних. Контрольні SHA-256 усіх 96 початкових файлів SharedPreferences незмінні, тестові prefs прибрані; приватна резервна копія лише в .artifacts. Звичайний MainActivity запущено, вибрано «Мої ліки».
+
+Межі: локальний сервер, не Render; DI у тесті явно під’єднує локальний URL. IOException/очікування керовані, реальний Wi-Fi не вимикався. Новий LocalDataStore не замінює перезапуск процесу; поворот/завершення процесу не перевіряли. Скасовані запити в цьому UI-тесті ще не надсилалися; захист від запізнілого завершення перевірено раніше JVM-тестами. Припинення обчислень на сервері не гарантується. [План](impl/feature_14/plan.md), [журнал](impl/feature_14/changelog.md).
+
+## 18.10.2026 — підготовка 0.3
+
+Команда :app:testDebugUnitTest :app:lintDebug :app:assembleRelease завершилася BUILD SUCCESSFUL in 1m 27s. Unit-задача UP-TO-DATE (без повторного виконання): XML містять 57 tests, 0 failures/errors/skipped. Lint: 0 errors, 50 warnings. Backend повторно перевірено: 29 тестів OK (0.120 с), без живого AI; зберігається відоме попередження Starlette щодо HTTPX.
+
+SDK apksigner/aapt2 підтвердили версію 0.3 (код 3), коректний підпис тим самим сертифікатом, що release 0.2, і відсутність application-debuggable. APK близько 2,72 МБ; підготовлено локальні APK/SHA256SUMS. Це перевірка пакета, не нова перевірка доставки нагадувань або встановлення release на телефон. Звичайна debug-версія телефона лишилася без змін. [Опис](releases/v0.3.md), [журнал](impl/release_0_3/changelog.md).

@@ -1,6 +1,7 @@
 package com.example.meditrackai
 
 import com.example.meditrackai.network.MedicationItem
+import com.example.meditrackai.data.MedicationJsonCodec
 import com.example.meditrackai.validation.FormValidators
 import com.google.gson.Gson
 import org.junit.Assert.assertEquals
@@ -28,7 +29,7 @@ class FormValidatorsTest {
 
     @Test fun oldMedicationDoesNotBecomeTakenToday() {
         val oldJson = """{"id":"old-id","name":"Ліки","dosage":"1 таб.","daysOfWeek":["Щодня"],"mealSlot":"08:00 (Після їжі)","endDate":"19.10.2026","isTaken":true}"""
-        val medication = Gson().fromJson(oldJson, MedicationItem::class.java)
+        val medication = MedicationJsonCodec().decode("[$oldJson]", legacy = true).single()
         assertEquals("old-id", medication.id)
         assertFalse(medication.isTakenOn("2026-10-12"))
         val takenToday = medication.copy(isTaken = true, lastTakenDate = "2026-10-12")

@@ -17,5 +17,7 @@ object SymptomResponseValidator {
         response.category in categories &&
         !response.explanation.isNullOrBlank() &&
         response.urgency in urgencies &&
-        !response.disclaimer.isNullOrBlank()
+        !response.disclaimer.isNullOrBlank() &&
+        (response.followUpQuestion == null ||
+            (response.followUpQuestion.isNotBlank() && response.followUpQuestion.length <= 300))
 }

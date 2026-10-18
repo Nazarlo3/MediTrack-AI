@@ -16,6 +16,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.meditrackai.data.LocalDataStore
+import com.example.meditrackai.data.symptoms.toDomain
+import com.example.meditrackai.domain.symptoms.SymptomHistoryEntry
 import com.example.meditrackai.network.SymptomHistoryItem
 import com.example.meditrackai.network.SymptomResponse
 import com.example.meditrackai.ui.HistorySection
@@ -50,14 +52,14 @@ class HistoryReportScreenshotsTest {
         try {
             compose.setContent {
                 MaterialTheme {
-                    var selected by remember { mutableStateOf<SymptomHistoryItem?>(null) }
+                    var selected by remember { mutableStateOf<SymptomHistoryEntry?>(null) }
                     val scope = rememberCoroutineScope()
                     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
                         Text("MediTrack AI — ЛР4", style = MaterialTheme.typography.headlineSmall)
                         Text("СИНТЕТИЧНІ ТЕСТОВІ ДАНІ", style = MaterialTheme.typography.labelLarge)
                         Spacer(Modifier.height(12.dp))
-                        HistorySection(history.value, false, false, selected,
-                            onOpen = { id -> selected = history.value.find { it.id == id } },
+                        HistorySection(history.value.map { it.toDomain() }, false, false, selected,
+                            onOpen = { id -> selected = history.value.find { it.id == id }?.toDomain() },
                             onDismissDetails = { selected = null },
                             onClear = { scope.launch {
                                 history.value = requireNotNull(store.updateHistory { emptyList() })

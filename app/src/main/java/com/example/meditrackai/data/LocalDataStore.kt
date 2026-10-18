@@ -14,6 +14,7 @@ class LocalDataStore(context: Context, private val gson: Gson = Gson()) {
     private val prefs = context.getSharedPreferences("meditrack_prefs", Context.MODE_PRIVATE)
     private val legacyHistory = context.getSharedPreferences("meditrack_history_prefs", Context.MODE_PRIVATE)
     private val historyCodec = HistoryJsonCodec(gson)
+    private val medicationCodec = MedicationJsonCodec(gson)
     private var history = emptyList<SymptomHistoryItem>()
     private var medications = emptyList<MedicationItem>()
     var readError: Boolean = false
@@ -24,7 +25,8 @@ class LocalDataStore(context: Context, private val gson: Gson = Gson()) {
             val currentHistoryJson = prefs.getString("symptom_history_v2", null)
             val historyJson = currentHistoryJson ?: prefs.getString("symptom_history", null)
                 ?: legacyHistory.getString("symptom_history_v1", null)
-            val medicationJson = prefs.getString("medications_list_v2", null)
+            val currentMedicationJson = prefs.getString("medications_list_v3", null)
+            val medicationJson = currentMedicationJson ?: prefs.getString("medications_list_v2", null)
                 ?: prefs.getString("medications_list_v1", null)
             history = try {
                 val decoded = historyCodec.decode(historyJson, legacy = currentHistoryJson == null)
@@ -35,18 +37,11 @@ class LocalDataStore(context: Context, private val gson: Gson = Gson()) {
                 decoded
             } catch (_: Exception) { readError = true; emptyList() }
             medications = try {
-                gson.fromJson(medicationJson, Array<MedicationItem>::class.java)
-                    ?.filterNotNull()?.also { items ->
-                        // Gson can populate non-null Kotlin properties with null in incomplete old JSON.
-                        items.forEach { item ->
-                            requireNotNull(item.id)
-                            requireNotNull(item.name)
-                            requireNotNull(item.dosage)
-                            requireNotNull(item.daysOfWeek)
-                            requireNotNull(item.mealSlot)
-                            requireNotNull(item.endDate)
-                        }
-                    } ?: emptyList()
+                val decoded = medicationCodec.decode(medicationJson, legacy = currentMedicationJson == null)
+                if (currentMedicationJson == null && medicationJson != null) {
+                    check(prefs.edit().putString("medications_list_v3", medicationCodec.encode(decoded)).commit())
+                }
+                decoded
             } catch (_: Exception) { readError = true; emptyList() }
             history to medications
         }
@@ -84,9 +79,13 @@ class LocalDataStore(context: Context, private val gson: Gson = Gson()) {
     suspend fun updateMedications(change: (List<MedicationItem>) -> List<MedicationItem>): List<MedicationItem>? = mutex.withLock {
         withContext(Dispatchers.IO) {
             if (readError) return@withContext null
-            val next = change(medications)
-            // The v1 key stays intact until the first successful v2 write.
-            if (prefs.edit().putString("medications_list_v2", gson.toJson(next)).commit()) {
+            // A notification action can write from another store instance while UI is backgrounded.
+            val current = prefs.getString("medications_list_v3", null)
+            val latest = try {
+                if (current == null) medications else medicationCodec.decode(current)
+            } catch (_: Exception) { readError = true; return@withContext null }
+            val next = medicationCodec.decode(medicationCodec.encode(change(latest)))
+            if (prefs.edit().putString("medications_list_v3", medicationCodec.encode(next)).commit()) {
                 medications = next
                 next
             } else null

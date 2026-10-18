@@ -34,6 +34,7 @@
             android:name=".ui.DebugAlarmReceiver"
             android:exported="false" />
         <receiver android:name=".reminders.MedicationReminderReceiver" android:exported="false" />
+        <receiver android:name=".reminders.MedicationNotificationActionReceiver" android:exported="false" />
         <receiver android:name=".reminders.ReminderRestoreReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

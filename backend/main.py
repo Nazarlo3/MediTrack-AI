@@ -1,25 +1,17 @@
-"""
-MediTrack AI — backend (Лабораторна робота 2)
-
-Запуск:
-    python main.py
-    або
-    python -m uvicorn main:app --host 0.0.0.0 --port 8000
-
-Swagger UI для ручної перевірки: http://127.0.0.1:8000/docs
-"""
+"""FastAPI HTTP boundary. Run from backend/: python -m uvicorn main:app."""
 
 import logging
+from typing import Annotated
+
+from fastapi import Depends, FastAPI, Request
+from fastapi.responses import JSONResponse
 import uvicorn
 
-from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
-
-load_dotenv()  # підхоплює GROQ_API_KEY з файлу .env, якщо він є
-
+from analysis_service import AnalysisService
+from dependencies import get_analysis_service
+from domain import AnalysisError, InvalidInputError
 from models import SymptomRequest, SymptomResponse
-from ai_service import categorize_symptom, AIServiceError
+from request_context import RequestContextMiddleware, current_request_id
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("meditrack.api")
@@ -29,52 +21,34 @@ app = FastAPI(
     description="Мінімальний backend для категоризації неідентифікаційного опису симптомів.",
     version="0.1.0",
 )
+app.add_middleware(RequestContextMiddleware)
 
 
 @app.get("/health")
 def health_check():
-    """Перевірка, що сервіс запущений і відповідає."""
     return {"status": "ok"}
 
 
 @app.post("/analyze-symptom", response_model=SymptomResponse)
-def analyze_symptom(request: SymptomRequest):
-    """
-    Основний сценарій лабораторної роботи:
-    приймає опис симптому -> валідує -> викликає AI -> повертає категорію.
-    """
-    description = request.description.strip()
+def analyze_symptom(request: SymptomRequest, service: Annotated[AnalysisService, Depends(get_analysis_service)]):
+    return SymptomResponse.from_domain(service.analyze(request.to_domain()))
 
-    if not description:
-        # Pydantic вже блокує порожній рядок через min_length,
-        # але додаткова перевірка на самі пробіли — про всяк випадок.
-        raise HTTPException(status_code=400, detail="Опис не може бути порожнім")
 
-    try:
-        result = categorize_symptom(description)
-    except AIServiceError as exc:
-        # Контрольована відповідь без технічних деталей (stack trace тощо).
-        logger.error("AI service error: %s", exc)
-        raise HTTPException(status_code=503, detail=str(exc))
-
-    return SymptomResponse(
-        category=result["category"],
-        explanation=result["explanation"],
-        urgency=result["urgency"],
-    )
+@app.exception_handler(AnalysisError)
+async def domain_error_handler(request: Request, exc: AnalysisError):
+    status = 400 if isinstance(exc, InvalidInputError) else 503
+    logger.warning("analysis_failed request_id=%s kind=%s", current_request_id(), type(exc).__name__)
+    return JSONResponse(status_code=status, content={"detail": exc.public_message})
 
 
 @app.exception_handler(Exception)
-async def unhandled_exception_handler(request, exc):
-    """
-    Останній рубіж захисту: будь-яка неочікувана помилка повертається
-    користувачу як загальне повідомлення, а не як внутрішній stack trace.
-    """
-    logger.exception("Unhandled exception: %s", exc)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Внутрішня помилка сервера. Спробуйте пізніше."},
-    )
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    # Do not publish/log exception text that may contain provider or input data.
+    request_id = getattr(request.state, "request_id", "-")
+    logger.error("unexpected_failure request_id=%s kind=%s", request_id, type(exc).__name__)
+    # ServerErrorMiddleware is outside user middleware, so add the same ID explicitly.
+    return JSONResponse(status_code=500, headers={"X-Request-ID": request_id},
+                        content={"detail": "Внутрішня помилка сервера. Спробуйте пізніше."})
 
 
 if __name__ == "__main__":

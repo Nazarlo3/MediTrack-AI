@@ -9,6 +9,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
@@ -17,13 +19,47 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.meditrackai.ui.theme.*
 
 @Composable
-fun SymptomCheckScreen(viewModel: SymptomViewModel = viewModel()) {
+fun SymptomCheckScreen(
+    viewModel: SymptomViewModel,
+    themeMode: com.example.meditrackai.data.ThemeMode = com.example.meditrackai.data.ThemeMode.SYSTEM,
+    onThemeChange: (com.example.meditrackai.data.ThemeMode) -> Unit = {}
+) {
+    var showSettings by rememberSaveable { mutableStateOf(false) }
+    if (showSettings) {
+        AlertDialog(onDismissRequest = { showSettings = false }, title = { Text("Налаштування") },
+            text = { Column {
+                Text("Тема застосунку", style = MaterialTheme.typography.titleSmall)
+                com.example.meditrackai.data.ThemeMode.entries.forEach { mode ->
+                    Row(Modifier.fillMaxWidth().clickable { onThemeChange(mode) }, verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = themeMode == mode, onClick = { onThemeChange(mode) })
+                        Text(mode.label)
+                    }
+                }
+            } }, confirmButton = { TextButton(onClick = { showSettings = false }) { Text("Готово") } })
+    }
     val context = LocalContext.current
+    DisposableEffect(context) {
+        val lifecycle = (context as? androidx.lifecycle.LifecycleOwner)?.lifecycle
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) viewModel.refreshMedications()
+        }
+        lifecycle?.addObserver(observer)
+        onDispose { lifecycle?.removeObserver(observer) }
+    }
     val uiState by viewModel.uiState.collectAsState()
+    val canClarify by viewModel.canClarify.collectAsState()
+    var clarificationDraft by rememberSaveable { mutableStateOf("") }
+    var lastCompletedAnalysisId by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(uiState) {
+        val success = uiState as? SymptomUiState.Success
+        if (success != null && success.analysisId != lastCompletedAnalysisId) {
+            clarificationDraft = ""
+            lastCompletedAnalysisId = success.analysisId
+        }
+    }
     val history by viewModel.historyState.collectAsState()
     val historyLoading by viewModel.historyLoading.collectAsState()
     val historyUnavailable by viewModel.historyUnavailable.collectAsState()
@@ -97,6 +133,10 @@ fun SymptomCheckScreen(viewModel: SymptomViewModel = viewModel()) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        FilledTonalIconButton(onClick = { showSettings = true }, modifier = Modifier.align(Alignment.End)) {
+            Icon(Icons.Default.Settings, contentDescription = "Налаштування")
+        }
+
         // Short Tab Names for Single Line Fit
         TabRow(
             selectedTabIndex = selectedTab,
@@ -137,7 +177,7 @@ fun SymptomCheckScreen(viewModel: SymptomViewModel = viewModel()) {
             tabStates.SaveableStateProvider("symptoms") {
             SymptomInputSection(
                 uiState = uiState,
-                onCheckSymptom = { viewModel.checkSymptom(it) }
+                onCheckSymptom = { clarificationDraft = ""; viewModel.checkSymptom(it) }
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -164,6 +204,7 @@ fun SymptomCheckScreen(viewModel: SymptomViewModel = viewModel()) {
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            TextButton(onClick = viewModel::cancelAnalysis) { Text("Скасувати аналіз") }
                         }
                     }
                 }
@@ -174,6 +215,13 @@ fun SymptomCheckScreen(viewModel: SymptomViewModel = viewModel()) {
                         explanation = state.result.explanation,
                         urgency = state.result.urgency,
                         disclaimer = state.result.disclaimer
+                    )
+                    ClarificationSection(
+                        question = state.result.followUpQuestion,
+                        enabled = canClarify, text = clarificationDraft,
+                        onTextChange = { clarificationDraft = it },
+                        onSend = viewModel::clarifySymptom,
+                        onNewCheck = { clarificationDraft = ""; viewModel.reset() }
                     )
                 }
 
@@ -204,8 +252,9 @@ fun SymptomCheckScreen(viewModel: SymptomViewModel = viewModel()) {
                 onAddMedication = { name, dosage, photoUri, days, mealSlot, endDate ->
                     viewModel.addMedication(name, dosage, photoUri, days, mealSlot, endDate)
                 },
-                onToggleStatus = { id -> viewModel.toggleMedicationStatus(id) },
-                onDeleteMedication = { id -> viewModel.deleteMedication(id) }
+                onToggleStatus = { id, time -> viewModel.toggleMedicationStatus(id, time) },
+                onDeleteMedication = { id -> viewModel.deleteMedication(id) },
+                onEditMedication = viewModel::editMedication
             )
             }
         }
@@ -270,7 +319,7 @@ private fun SuccessCard(
     urgency: String?,
     disclaimer: String
 ) {
-    val isDark = isSystemInDarkTheme()
+    val isDark = LocalAppDarkTheme.current
     val safeUrgency = (urgency ?: "звичайне").lowercase()
 
     val (badgeText, badgeBgColor, badgeTextColor) = remember(safeUrgency, isDark) {

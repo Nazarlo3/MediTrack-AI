@@ -3,8 +3,8 @@ package com.example.meditrackai
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.example.meditrackai.network.SymptomHistoryItem
-import com.example.meditrackai.network.SymptomResponse
+import com.example.meditrackai.domain.symptoms.SymptomHistoryEntry as SymptomHistoryItem
+import com.example.meditrackai.domain.symptoms.SymptomAnalysis as SymptomResponse
 import com.example.meditrackai.ui.HistorySection
 import org.junit.Assert.assertEquals
 import org.junit.Rule

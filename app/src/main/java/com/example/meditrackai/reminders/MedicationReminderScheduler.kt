@@ -13,8 +13,9 @@ import androidx.core.content.ContextCompat
 import com.example.meditrackai.MainActivity
 import com.example.meditrackai.R
 import com.example.meditrackai.data.LocalDataStore
-import kotlinx.coroutines.Dispatchers
+import com.example.meditrackai.network.MedicationItem
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -24,145 +25,194 @@ class MedicationReminderScheduler(context: Context) {
     private val context = context.applicationContext
     private val alarms = this.context.getSystemService(AlarmManager::class.java)
     private val notifications = this.context.getSystemService(NotificationManager::class.java)
-    private val prefs = this.context.getSharedPreferences("medication_reminders", Context.MODE_PRIVATE)
-
+    private val prefs = this.context.getSharedPreferences("medication_dose_reminders", Context.MODE_PRIVATE)
     companion object {
         const val CHANNEL = "medication_reminders"
+        const val TAKE = "com.example.meditrackai.TAKE_DOSE"
+        const val SNOOZE = "com.example.meditrackai.SNOOZE_DOSE"
         private val lock = Mutex()
+        fun doseKey(id: String, time: String) = "$id|$time"
     }
-
     fun exactAllowed(): Boolean = Build.VERSION.SDK_INT < 31 || alarms.canScheduleExactAlarms()
-
-    fun notificationsAllowed(): Boolean {
-        if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false
-        return NotificationManagerCompat.from(context).areNotificationsEnabled() &&
-            notifications.getNotificationChannel(CHANNEL)?.importance != NotificationManager.IMPORTANCE_NONE
-    }
-
+    fun notificationsAllowed(): Boolean =
+        (Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) &&
+        NotificationManagerCompat.from(context).areNotificationsEnabled() &&
+        notifications.getNotificationChannel(CHANNEL)?.importance != NotificationManager.IMPORTANCE_NONE
     fun createChannel() {
         notifications.createNotificationChannel(NotificationChannel(CHANNEL, "Прийом ліків", NotificationManager.IMPORTANCE_HIGH).apply {
             description = "Нагадування за збереженим графіком препаратів"
         })
     }
-
-    private fun alarmIntent(id: String, flags: Int = PendingIntent.FLAG_UPDATE_CURRENT): PendingIntent? = PendingIntent.getBroadcast(
+    private fun alarmIntent(id: String, time: String, version: String, flags: Int = PendingIntent.FLAG_UPDATE_CURRENT): PendingIntent? = PendingIntent.getBroadcast(
         context, 0, Intent(context, MedicationReminderReceiver::class.java).apply {
-            data = Uri.Builder().scheme("meditrack").authority("medication").appendPath(id).build()
-            putExtra("medication_id", id)
-        }, flags or PendingIntent.FLAG_IMMUTABLE
-    )
-
-    private fun cancel(id: String, notification: Boolean = true) {
-        alarmIntent(id, PendingIntent.FLAG_NO_CREATE)?.let { alarms.cancel(it); it.cancel() }
-        if (notification) notifications.cancel(id, 0)
+            data = Uri.Builder().scheme("meditrack").authority("dose").appendPath(id).appendPath(time).build()
+            putExtra("medication_id", id); putExtra("dose_time", time); putExtra("schedule_version", version)
+        }, flags or PendingIntent.FLAG_IMMUTABLE)
+    private fun cancel(key: String, notification: Boolean = true) {
+        alarmIntent(key.substringBefore('|'), key.substringAfter('|'), "", PendingIntent.FLAG_NO_CREATE)?.let { alarms.cancel(it); it.cancel() }
+        if (notification) notifications.cancel(key, 0)
     }
-
+    private fun clearMetadata(key: String) {
+        val editor = prefs.edit()
+        listOf("next", "delivered", "version", "snooze", "snooze_date", "posted", "posted_date").forEach { editor.remove("$it:$key") }
+        check(editor.commit())
+    }
+    private fun retireLegacyAlarms(items: List<MedicationItem>) {
+        if (prefs.getBoolean("legacy_retired", false)) return
+        val old = context.getSharedPreferences("medication_reminders", Context.MODE_PRIVATE)
+        val editor = prefs.edit()
+        for (id in old.getStringSet("ids", emptySet()).orEmpty()) {
+            val intent = Intent(context, MedicationReminderReceiver::class.java).apply {
+                data = Uri.Builder().scheme("meditrack").authority("medication").appendPath(id).build()
+            }
+            PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE)?.let { alarms.cancel(it); it.cancel() }
+            notifications.cancel(id, 0)
+            val item = items.find { it.id == id } ?: continue
+            val clocks = MedicationSchedule.times(item).orEmpty()
+            if (clocks.size == 1) {
+                val key = doseKey(id, clocks.single().toString())
+                old.getString("delivered:$id", null)?.let { editor.putString("delivered:$key", it) }
+                editor.putString("version:$key", item.scheduleVersion)
+            }
+        }
+        check(editor.putBoolean("legacy_retired", true).commit())
+    }
     suspend fun synchronize(reset: Boolean = false): String? = lock.withLock {
         withContext(Dispatchers.IO) {
-            try {
-                synchronizeLocked(reset)
-                check(prefs.edit().remove("schedule_error").commit())
-                null
-            } catch (e: CancellationException) { throw e }
+            try { synchronizeLocked(reset); check(prefs.edit().remove("schedule_error").commit()); null }
+            catch (e: CancellationException) { throw e }
             catch (_: Exception) {
                 prefs.edit().putBoolean("schedule_error", true).commit()
                 "Не вдалося оновити нагадування. Відкрийте вкладку ліків і спробуйте ще раз."
             }
         }
     }
-
     private suspend fun synchronizeLocked(reset: Boolean) {
         createChannel()
         val store = LocalDataStore(context)
-        val (_, items) = store.load()
-        check(!store.readError) { "Cannot read medications" }
-        val ids = items.map { it.id }.toSet()
-        val previous = prefs.getStringSet("ids", emptySet()).orEmpty().toSet()
-        val editor = prefs.edit()
-        (previous - ids).forEach { id -> cancel(id); editor.remove("next:$id").remove("delivered:$id") }
-        check(editor.putStringSet("ids", ids).commit())
-        val now = ZonedDateTime.now()
-        for (item in items) {
-            val delivered = prefs.getString("delivered:${item.id}", null)
-            val old = prefs.getLong("next:${item.id}", -1)
-            val todayOccurrence = MedicationSchedule.occurrence(item, now.toLocalDate(), now.zone)?.toInstant()?.toEpochMilli()
-            // Keep an already due inexact alarm while Android is delaying delivery.
-            if (shouldPreserveDueAlarm(
-                    reset = reset,
-                    hasError = prefs.getBoolean("schedule_error", false) || prefs.getBoolean("delivery_error", false),
-                    notificationsAllowed = notificationsAllowed(),
-                    scheduledAt = old,
-                    now = now.toInstant().toEpochMilli(),
-                    todayOccurrence = todayOccurrence,
-                    deliveredToday = delivered == now.toLocalDate().toString()
-                )) continue
-            val next = if (notificationsAllowed()) MedicationSchedule.next(item, now, delivered) else null
-            if (next == null) {
-                cancel(item.id, notification = item.isTakenOn(now.toLocalDate().toString()) || !notificationsAllowed())
-                check(prefs.edit().remove("next:${item.id}").commit())
-                continue
+        val (_, items) = store.load(); check(!store.readError)
+        retireLegacyAlarms(items)
+        val keys = items.flatMap { item -> MedicationSchedule.times(item).orEmpty().map { doseKey(item.id, it.toString()) } }.toSet()
+        val previous = prefs.getStringSet("keys", emptySet()).orEmpty().toSet()
+        (previous - keys).forEach { cancel(it); clearMetadata(it) }
+        check(prefs.edit().putStringSet("keys", keys).commit())
+        val now = ZonedDateTime.now(); val date = now.toLocalDate().toString()
+        for (item in items) for (clock in MedicationSchedule.times(item).orEmpty()) {
+            val time = clock.toString(); val key = doseKey(item.id, time)
+            if (prefs.getString("version:$key", null) != item.scheduleVersion) {
+                cancel(key); clearMetadata(key)
+                check(prefs.edit().putString("version:$key", item.scheduleVersion).commit())
             }
-            if (item.isTakenOn(now.toLocalDate().toString())) notifications.cancel(item.id, 0)
-            val at = next.toInstant().toEpochMilli()
-            val pending = requireNotNull(alarmIntent(item.id))
+            val occurrence = MedicationSchedule.occurrence(item, now.toLocalDate(), now.zone, clock)?.toInstant()?.toEpochMilli()
+            val snoozeAt = prefs.getLong("snooze:$key", -1)
+            val snoozeValid = snoozeAt > 0 && prefs.getString("snooze_date:$key", null) == date && occurrence != null
+            if (snoozeAt > 0 && !snoozeValid) check(prefs.edit().remove("snooze:$key").remove("snooze_date:$key").commit())
+            if (item.isDoseTakenOn(time, date) || !notificationsAllowed() || (prefs.getString("posted_date:$key", null)?.let { it != date } == true)) {
+                notifications.cancel(key, 0)
+                check(prefs.edit().remove("posted:$key").remove("posted_date:$key").commit())
+            }
+            val delivered = prefs.getString("delivered:$key", null)
+            val old = prefs.getLong("next:$key", -1)
+            if (shouldPreserveDueAlarm(reset,
+                    prefs.getBoolean("schedule_error", false) || prefs.getBoolean("delivery_error", false),
+                    notificationsAllowed(), old, now.toInstant().toEpochMilli(),
+                    if (snoozeValid) snoozeAt else occurrence, !snoozeValid && delivered == date)) continue
+            val next = if (!notificationsAllowed()) null else if (snoozeValid) snoozeAt.coerceAtLeast(now.toInstant().toEpochMilli() + 1000)
+                else MedicationSchedule.next(item, now, delivered, clock)?.toInstant()?.toEpochMilli()
+            if (next == null) { cancel(key, notification = occurrence == null || !notificationsAllowed()); check(prefs.edit().remove("next:$key").commit()); continue }
+            val pending = requireNotNull(alarmIntent(item.id, time, item.scheduleVersion))
             registerReminderAlarm(
                 schedule = {
                     try {
-                        if (exactAllowed()) alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending)
-                        else alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending)
-                    } catch (_: SecurityException) {
-                        alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pending)
-                    }
-                },
-                record = { prefs.edit().putLong("next:${item.id}", at).commit() },
-                cancel = { alarms.cancel(pending) },
-                clear = { prefs.edit().remove("next:${item.id}").commit() }
-            )
+                        if (exactAllowed()) alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next, pending)
+                        else alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next, pending)
+                    } catch (_: SecurityException) { alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next, pending) }
+                }, record = { prefs.edit().putLong("next:$key", next).commit() },
+                cancel = { alarms.cancel(pending) }, clear = { prefs.edit().remove("next:$key").commit() })
         }
     }
-
-    suspend fun deliver(id: String) = lock.withLock {
+    suspend fun deliver(id: String, time: String, version: String) = lock.withLock {
         withContext(Dispatchers.IO) {
             try {
                 val store = LocalDataStore(context)
-                val (_, items) = store.load()
-                check(!store.readError)
+                val (_, items) = store.load(); check(!store.readError)
                 val item = items.find { it.id == id }
-                val at = prefs.getLong("next:$id", -1)
-                val now = ZonedDateTime.now()
-                val date = now.toLocalDate()
-                val occurrence = item?.let { MedicationSchedule.occurrence(it, date, now.zone) }
-                if (item != null && occurrence != null && at == occurrence.toInstant().toEpochMilli() &&
-                    at <= now.toInstant().toEpochMilli() && prefs.getString("delivered:$id", null) != date.toString() && notificationsAllowed()) {
-                    createChannel()
-                    val open = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-                    val notification = NotificationCompat.Builder(context, CHANNEL)
-                        .setSmallIcon(R.drawable.ic_medication_notification)
-                        .setContentTitle("Час прийняти ${item.name}")
-                        .setContentText("${item.dosage} • ${item.mealSlot}")
-                        .setContentIntent(open).setAutoCancel(true)
-                        .setPriority(NotificationCompat.PRIORITY_HIGH).build()
-                    // Reserve this local day before posting to avoid duplicate receiver deliveries.
-                    check(prefs.edit().putString("delivered:$id", date.toString()).remove("next:$id").commit())
-                    notifications.notify(id, 0, notification)
+                val key = doseKey(id, time); val now = ZonedDateTime.now(); val date = now.toLocalDate().toString()
+                val at = prefs.getLong("next:$key", -1)
+                val clock = runCatching { LocalTime.parse(time) }.getOrNull()
+                val occurrence = if (item != null && clock != null) MedicationSchedule.occurrence(item, now.toLocalDate(), now.zone, clock) else null
+                val snoozed = prefs.getLong("snooze:$key", -1) > 0 && prefs.getString("snooze_date:$key", null) == date
+                val expected = if (snoozed) prefs.getLong("snooze:$key", -1) else occurrence?.toInstant()?.toEpochMilli()
+                if (item != null && item.scheduleVersion == version && occurrence != null && at > 0 &&
+                    (at == expected || snoozed && at >= requireNotNull(expected)) && at <= now.toInstant().toEpochMilli() &&
+                    (snoozed || prefs.getString("delivered:$key", null) != date) && notificationsAllowed()) {
+                    val token = "$version|$date|$at"
+                    check(prefs.edit().putString("delivered:$key", date).putString("posted:$key", token)
+                        .putString("posted_date:$key", date).remove("next:$key").remove("snooze:$key").remove("snooze_date:$key").commit())
+                    postNotification(item, time, date, token)
                     prefs.edit().remove("delivery_error").apply()
                 }
                 synchronizeLocked(false)
             } catch (e: CancellationException) { throw e }
-            catch (_: Exception) {
-                // Do not overwrite medication data or crash the broadcast process.
-                prefs.edit().putBoolean("delivery_error", true).commit()
-            }
+            catch (_: Exception) { prefs.edit().putBoolean("delivery_error", true).commit() }
         }
     }
-
+    private fun actionIntent(item: MedicationItem, time: String, date: String, token: String, action: String): PendingIntent =
+        PendingIntent.getBroadcast(context, 0, Intent(context, MedicationNotificationActionReceiver::class.java).apply {
+            this.action = action
+            data = Uri.Builder().scheme("meditrack").authority("dose-action").appendPath(item.id).appendPath(time).appendPath(token).appendPath(action).build()
+            putExtra("medication_id", item.id); putExtra("dose_time", time); putExtra("dose_date", date)
+            putExtra("schedule_version", item.scheduleVersion); putExtra("action_token", token)
+        }, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    private fun postNotification(item: MedicationItem, time: String, date: String, token: String) {
+        val open = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val notification = NotificationCompat.Builder(context, CHANNEL).setSmallIcon(R.drawable.ic_medication_notification)
+            .setContentTitle("Час прийняти " + item.name).setContentText(item.dosage + " • " + time)
+            .setContentIntent(open).setAutoCancel(true).setPriority(NotificationCompat.PRIORITY_HIGH)
+            .addAction(0, "Прийняв", actionIntent(item, time, date, token, TAKE))
+        // Do not transfer a previous day's dose to a new day.
+        if (DoseActionPolicy.snoozeUntil(ZonedDateTime.now()) != null) {
+            notification.addAction(0, "Через 10 хв", actionIntent(item, time, date, token, SNOOZE))
+        }
+        notifications.notify(doseKey(item.id, time), 0, notification.build())
+    }
+    suspend fun handleAction(id: String, time: String, date: String, version: String, token: String, action: String) = lock.withLock {
+        withContext(Dispatchers.IO) {
+            try {
+                if (action !in setOf(TAKE, SNOOZE)) return@withContext
+                val store = LocalDataStore(context)
+                val (_, items) = store.load(); check(!store.readError)
+                val item = items.find { it.id == id } ?: return@withContext
+                val now = ZonedDateTime.now(); val key = doseKey(id, time)
+                if (!DoseActionPolicy.isCurrent(item, time, date, version, now.toLocalDate()) || prefs.getString("posted:$key", null) != token) return@withContext
+                if (action == TAKE) {
+                    var changed = false
+                    checkNotNull(store.updateMedications { list -> list.map { current ->
+                        if (current.id != id || !DoseActionPolicy.isCurrent(current, time, date, version, now.toLocalDate())) current
+                        else {
+                            changed = true
+                            current.copy(takenDoseDates = current.takenDoseDates.orEmpty() + (time to date), isTaken = false, lastTakenDate = null)
+                        }
+                    } })
+                    if (!changed) { synchronizeLocked(false); return@withContext }
+                    check(prefs.edit().remove("snooze:$key").remove("snooze_date:$key").commit())
+                } else {
+                    val later = DoseActionPolicy.snoozeUntil(now) ?: return@withContext
+                    check(prefs.edit().putLong("snooze:$key", later.toInstant().toEpochMilli()).putString("snooze_date:$key", date).commit())
+                }
+                check(prefs.edit().remove("posted:$key").remove("posted_date:$key").commit())
+                notifications.cancel(key, 0)
+                synchronizeLocked(false)
+            } catch (e: CancellationException) { throw e }
+            catch (_: Exception) { prefs.edit().putBoolean("delivery_error", true).commit() }
+        }
+    }
     fun status(): String = when {
         prefs.getBoolean("schedule_error", false) -> "Не вдалося оновити графік. Натисніть «Оновити нагадування»."
-        prefs.getBoolean("delivery_error", false) -> "Була помилка доставки нагадування. Перевірте дозволи та налаштування сповіщень."
+        prefs.getBoolean("delivery_error", false) -> "Була помилка доставки або дії нагадування. Перевірте графік і дозволи."
         !notificationsAllowed() -> "Сповіщення вимкнені. Дозвольте їх, щоб отримувати нагадування."
         !exactAllowed() -> "Нагадування ввімкнені, але можлива затримка. Дозвольте точний час."
-        else -> "Доступ до нагадувань надано. Графік залежить від часу, днів і кінця курсу."
+        else -> "Нагадування ввімкнені для кожного часу прийому."
     }
-
     suspend fun refresh(): String? = synchronize()
 }
