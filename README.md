@@ -8,11 +8,11 @@
 
 ## Оновлення 0.3
 
-Підготовлено до публікації: редагування ліків, до 12 часів прийому, окремі статуси, дії сповіщень «Прийняв»/«Через 10 хв», три теми, AI-уточнення та скасування аналізу. Архітектуру аналізу відділено через repository/use case/DI; backend має service/provider і request_id.
+Версія 0.3 опублікована: редагування ліків, до 12 часів прийому, окремі статуси, дії сповіщень «Прийняв»/«Через 10 хв», три теми, AI-уточнення та скасування аналізу. Архітектуру аналізу відділено через repository/use case/DI; backend має service/provider і request_id.
 
-[Повний опис 0.3](docs/releases/v0.3.md) · [план і перевірки](docs/impl/release_0_3/changelog.md). Android 10+, versionCode 3. Новий GitHub Release ще не опубліковано.
+[Повний опис 0.3](docs/releases/v0.3.md) · [план і перевірки](docs/impl/release_0_3/changelog.md). Android 10+, versionCode 3. [Завантажити release APK 0.3](https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.3/MediTrackAI-0.3-release.apk) · [Реліз](https://github.com/Nazarlo3/MediTrack-AI/releases/tag/v0.3) · [SHA256SUMS](https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.3/SHA256SUMS.txt).
 
-Попередня опублікована версія: [release APK 0.2](https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.2/MediTrackAI-0.2-release.apk) · [опис 0.2](docs/releases/v0.2.md). Вона не містить нових можливостей 0.3.
+Попередня версія: [release APK 0.2](https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.2/MediTrackAI-0.2-release.apk) · [опис 0.2](docs/releases/v0.2.md). Вона не містить нових можливостей 0.3.
 
 Сертифікат release 0.3 тотожний 0.2 (перевірено SDK-інструментами); ці release APK можна оновлювати поверх. Debug має інший ключ і не оновлюється таким release. Видалення застосунку стирає локальні дані; інший профіль Xiaomi також може зберігати пакет.
 
