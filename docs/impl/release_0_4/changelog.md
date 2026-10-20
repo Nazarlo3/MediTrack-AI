@@ -16,4 +16,7 @@
 
 ## Публікація
 
-Публікація v0.4 виконується після окремого релізного коміту та push, з перевіркою обох завантажених assets і публічного SHA-256 APK. Попередні v0.2/v0.3 не змінюються. Посилання: https://github.com/Nazarlo3/MediTrack-AI/releases/tag/v0.4.
+- Коміт коду релізу 1c62836e94ded74595b4bcf43cc15f98d7da8bb2 запушено в main. Усі Android/Gradle-файли коміту зіставлено з реальною чистою копією, в якій зібрано APK; відмінностей немає. APK зібрано перед створенням цього коміту, що зафіксовано в локальних BUILD-INFO.
+- [GitHub Release v0.4](https://github.com/Nazarlo3/MediTrack-AI/releases/tag/v0.4) опубліковано з тегом на цей коміт. Додано [MediTrackAI-0.4-release.apk](https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.4/MediTrackAI-0.4-release.apk) і [SHA256SUMS.txt](https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.4/SHA256SUMS.txt).
+- До публікації перевірено розміри й GitHub digest обох assets; після неї APK завантажено за публічною адресою, SHA-256 збігся з локальним. Сирий результат публікації — `.artifacts/release-v0.4/publication.json`.
+- Старі v0.2/v0.3 збережені. Телефон і його дані не змінювалися. Невідібрані робочі файли звірено за початковими SHA-256, вони незмінні. README і опис оновлено фактичними посиланнями; цей запис публікації є наступним документаційним комітом, а тег v0.4 залишається на перевіреному коді 1c62836.
