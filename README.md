@@ -1,4 +1,4 @@
-# MediTrack AI 0.3 — Smart Symptom Analysis MVP
+# MediTrack AI 0.4 — Smart Symptom Analysis MVP
 
 **MediTrack AI** — це мінімальна робоча версія (MVP) медичного асистента: мобільний застосунок на Android (Jetpack Compose) надсилає опис симптому на сервер (FastAPI), де штучний інтелект (Groq AI) здійснює первинну категоризацію звернення та формує коротке пояснення.
 
@@ -6,15 +6,15 @@
 
 ---
 
-## Оновлення 0.3
+## Оновлення 0.4
 
-Версія 0.3 опублікована: редагування ліків, до 12 часів прийому, окремі статуси, дії сповіщень «Прийняв»/«Через 10 хв», три теми, AI-уточнення та скасування аналізу. Архітектуру аналізу відділено через repository/use case/DI; backend має service/provider і request_id.
+Додано необов’язкові тривалість симптому **1–30 днів** та інтенсивність **0–10**. Android і backend перевіряють значення, AI враховує їх у поясненні, а історія, уточнення та повтор запиту зберігають ці параметри. Це самооцінка, не діагностична шкала. Можливості 0.3 — ліки, графіки, нагадування, теми, уточнення та скасування — збережені.
 
-[Повний опис 0.3](docs/releases/v0.3.md) · [план і перевірки](docs/impl/release_0_3/changelog.md). Android 10+, versionCode 3. [Завантажити release APK 0.3](https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.3/MediTrackAI-0.3-release.apk) · [Реліз](https://github.com/Nazarlo3/MediTrack-AI/releases/tag/v0.3) · [SHA256SUMS](https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.3/SHA256SUMS.txt).
+[Повний опис 0.4](docs/releases/v0.4.md) · [план і перевірки](docs/impl/release_0_4/changelog.md). Android 10+, versionCode 4. [Завантажити release APK 0.4](https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.4/MediTrackAI-0.4-release.apk) · [Реліз](https://github.com/Nazarlo3/MediTrack-AI/releases/tag/v0.4) · [SHA256SUMS](https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.4/SHA256SUMS.txt).
 
-Попередня версія: [release APK 0.2](https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.2/MediTrackAI-0.2-release.apk) · [опис 0.2](docs/releases/v0.2.md). Вона не містить нових можливостей 0.3.
+Попередні версії: [release 0.3](https://github.com/Nazarlo3/MediTrack-AI/releases/tag/v0.3) · [опис 0.3](docs/releases/v0.3.md) · [release 0.2](https://github.com/Nazarlo3/MediTrack-AI/releases/tag/v0.2).
 
-Сертифікат release 0.3 тотожний 0.2 (перевірено SDK-інструментами); ці release APK можна оновлювати поверх. Debug має інший ключ і не оновлюється таким release. Видалення застосунку стирає локальні дані; інший профіль Xiaomi також може зберігати пакет.
+Release 0.4 підписаний тим самим ключем, що 0.3; збіг сертифікатів перевірено SDK-інструментами. Debug має інший ключ і не оновлюється таким release. Видалення застосунку стирає локальні дані; інший профіль Xiaomi також може зберігати пакет.
 
 ## Локальна історія — ЛР4
 
@@ -28,7 +28,7 @@
 
 Перелік розширено із 7 до 16 категорій: додано травми, серцево-судинні, сечовидільні, очні, ЛОР, стоматологічні, алергічні, психоемоційні та репродуктивні скарги. AI враховує можливу травму в описі удару тілом об предмет, заперечення й метафори; за браком даних пояснює невизначеність і ставить уточнювальне питання. У поточних змінах можна продовжити перевірку уточненнями з контекстом; це не діагностика.
 
-Зміни ще не розгорнуті на Render і не входять до опублікованого APK 0.2. Потрібні оновлена Android-збірка та backend. [Правила AI й категорії](docs/ai-component.md), [перевірки](docs/testing.md).
+Категорії та уточнення доступні у версії 0.3 і новіших. Перед випуском 0.4 хмарний Render перевірено справжнім синтетичним запитом; нові поля підтверджені через details_used=true. [Правила AI й категорії](docs/ai-component.md), [перевірки](docs/testing.md).
 
 ## Можливості версії 0.3
 
@@ -87,7 +87,7 @@ python -m uvicorn main:app --host 127.0.0.1 --port 8000
 
 Критерії й baseline 0.3 зафіксовані перед реалізацією. [План/файли](docs/impl/feature_16/plan.md), [опис і межі](docs/ai-development.md), [новий набір та команди](backend/evaluation/details/README.md), [фактична таблиця](backend/evaluation/details/results/SUMMARY.md). Поточна версія: 5/5 регресій + 5/5 нових очікувань; це інженерна відповідність, не медична точність. `python backend/evaluation/run.py --suite details` не використовує мережу; лише --live дозволяє синтетичні Groq-запити з серверним ключем. Попереднє порівняння 7/16 категорій з 429 збережене окремо, не видається за нову AI-функцію.
 
-Розширення підготовлене після release 0.3 та перевірене у debug-збірці; до опублікованого APK 0.3 воно не входить. Для роботи полів з Render потрібне окреме розгортання backend; його в цій задачі не виконували. [Фінальне Git-оформлення й перевірки](docs/impl/feature_21/changelog.md).
+Розширення входить до версії 0.4; APK 0.3 цих полів не має. Хмарний backend підтвердив підтримку: health/OpenAPI та аналіз із duration_days/intensity успішні. [Код ЛР6 і перевірки](docs/impl/feature_21/changelog.md), [підготовка релізу 0.4](docs/impl/release_0_4/changelog.md).
 
 ## 🚀 Основний сценарій використання
 
