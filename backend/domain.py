@@ -17,6 +17,8 @@ class ConversationMessage:
 class AnalysisInput:
     description: str
     context: tuple[ConversationMessage, ...] = ()
+    duration_days: int | None = None
+    intensity: int | None = None
 
 
 @dataclass(frozen=True)
@@ -27,6 +29,7 @@ class AnalysisResult:
     follow_up_question: str | None = None
     context_used: bool = False
     disclaimer: str = MEDICAL_DISCLAIMER
+    details_used: bool = False
 
 
 class AnalysisError(Exception):

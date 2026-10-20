@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-18",
+  "synthetic_only": true,
+  "device": {
+    "model": "23030RAC7Y",
+    "android": "15",
+    "versionName": "0.2",
+    "versionCode": "2",
+    "testApkSha256": "4b25638b0147310e14608bcdbdb9ac279e58ddfebd39de850f26decbdd43f71a",
+    "route": "Android real screen/repository -> local FastAPI -> Groq",
+    "productionApkUnchanged": true,
+    "finalTestApkSha256": "51590aaa7999ccea632d96224112a420a2bd977324602a00f8e12c75a1b03343"
+  },
+  "attempts": [
+    {
+      "file": "mobile-attempt-1.txt",
+      "passed": false,
+      "cause": "Missing ADB reverse after reconnect"
+    },
+    {
+      "file": "mobile-attempt-2.txt",
+      "passed": false,
+      "cause": "Test compared DTO with domain value"
+    },
+    {
+      "file": "mobile-attempt-3.txt",
+      "passed": true,
+      "cause": "Success after mapper correction"
+    }
+  ],
+  "final_result": "OK (1 test)",
+  "final_duration_seconds": 9.16,
+  "verified": [
+    "initial injury/attention/question",
+    "clarification other/normal/context_used",
+    "two independent persisted history results",
+    "X-Request-ID"
+  ],
+  "preservation": {
+    "originalFiles": 65,
+    "changedFiles": 0,
+    "newOriginalFiles": 0,
+    "testPreferencesLeft": 0,
+    "userDataUnchanged": true
+  },
+  "screenshots_local_only": [
+    "docs/various files/screenshot/ЛР6/01_початковий_аналіз.png",
+    "docs/various files/screenshot/ЛР6/02_після_уточнення.png"
+  ],
+  "limits": "Only one scenario. Existing debug app versionName 0.2/code 2, only test APK updated. Local FastAPI -> Groq, not release APK or Render. No clinical validation."
+}

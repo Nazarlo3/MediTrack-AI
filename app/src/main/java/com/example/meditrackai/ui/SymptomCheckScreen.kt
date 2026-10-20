@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -18,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.meditrackai.ui.theme.*
 
@@ -177,7 +179,9 @@ fun SymptomCheckScreen(
             tabStates.SaveableStateProvider("symptoms") {
             SymptomInputSection(
                 uiState = uiState,
-                onCheckSymptom = { clarificationDraft = ""; viewModel.checkSymptom(it) }
+                onCheckSymptom = { text, days, intensity ->
+                    clarificationDraft = ""; viewModel.checkSymptom(text, days, intensity)
+                }
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -264,9 +268,15 @@ fun SymptomCheckScreen(
 @Composable
 private fun SymptomInputSection(
     uiState: SymptomUiState,
-    onCheckSymptom: (String) -> Unit
+    onCheckSymptom: (String, Int?, Int?) -> Unit
 ) {
     var inputText by rememberSaveable { mutableStateOf("") }
+    var durationText by rememberSaveable { mutableStateOf("") }
+    var intensityText by rememberSaveable { mutableStateOf("") }
+    val duration = durationText.trim().toIntOrNull()
+    val intensity = intensityText.trim().toIntOrNull()
+    val invalidDuration = durationText.isNotBlank() && (duration == null || duration !in 1..30)
+    val invalidIntensity = intensityText.isNotBlank() && (intensity == null || intensity !in 0..10)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -293,11 +303,25 @@ private fun SymptomInputSection(
                 shape = RoundedCornerShape(12.dp)
             )
 
+            Spacer(modifier = Modifier.height(12.dp))
+            Text("Додаткові дані — необов’язково", style = MaterialTheme.typography.labelLarge)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(value = durationText, onValueChange = { durationText = it },
+                    label = { Text("Тривалість, днів") }, singleLine = true,
+                    supportingText = { Text("Ціле число 1–30") }, isError = invalidDuration,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    enabled = uiState !is SymptomUiState.Loading, modifier = Modifier.weight(1f))
+                OutlinedTextField(value = intensityText, onValueChange = { intensityText = it },
+                    label = { Text("Інтенсивність") }, singleLine = true,
+                    supportingText = { Text("Самооцінка 0–10") }, isError = invalidIntensity,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    enabled = uiState !is SymptomUiState.Loading, modifier = Modifier.weight(1f))
+            }
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = { onCheckSymptom(inputText) },
-                enabled = uiState !is SymptomUiState.Loading,
+                onClick = { onCheckSymptom(inputText, duration, intensity) },
+                enabled = uiState !is SymptomUiState.Loading && !invalidDuration && !invalidIntensity,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),

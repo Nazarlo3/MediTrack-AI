@@ -1,5 +1,23 @@
 # Testing Guide — MediTrack AI
 
+## ЛР6 — нова реалізація 20.10.2026
+
+Фінальна перевірка **кандидата коміту**, зібраного з HEAD та лише відібраних змін ЛР6: **38 backend-тестів OK** (0,292 с); Android `testDebugUnitTest/lintDebug/assembleDebug/assembleDebugAndroidTest --offline` — **BUILD SUCCESSFUL, 1 хв 5 с**, усі **61 JVM-тест виконано**, 0 failures/errors/skipped. Lint: 0 errors / 44 warnings. Перевірки виконано в окремій копії без сторонніх доповнень ЛР2–3; це не повторне тестування опублікованого APK. [Протокол і межі](impl/feature_21/verification.json), [журнал Git-оформлення](impl/feature_21/changelog.md). Обидва evaluator suite пройшли dry-run, нових Groq-запитів та встановлення APK не було. Збережені живі результати нижче не видаються за новий запуск.
+
+Необов'язкові duration_days/intensity реалізовано після фіксації [плану/порогів](impl/feature_16/plan.md). Окремий [набір і результати](../backend/evaluation/details/results/SUMMARY.md) порівнює 0.3 із 16 категоріями та нову реалізацію: регресії 5/5 в обох, розширення 0/5 → 5/5, по 10/10 валідних відповідей. **20 HTTP 200, з першої спроби**, без повторів. Точні числа у explanation перевіряються окремо від server-owned details_used; це не клінічна оцінка.
+
+Команди: `python -m unittest discover -s backend/tests -v` — **38 tests OK**; `:app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest` — **BUILD SUCCESSFUL, 50 с**, фактичні XML: **61 test, 0 failures/errors**. Після уточнення лише скриншотних селекторів перезбирали тільки test APK (3 с і 2 с), unit-набори не повторювали. Відомі попередження TabRow/Starlette залишені.
+
+`Lab5PhoneScenarioTest#lab6DurationAndIntensityReachAIAndHistory` — **OK (1 test), 11.814 с**, перший запуск. Android 15/Xiaomi 23030RAC7Y, оновлений debug 0.3/code 3 через install -r, справжній локальний FastAPI → Groq. Перевірено межі полів, живий результат 3 дн./5/10, підтвердження підтримки, уточнення, збереження й перечитування двох записів та діалог деталей. 65 початкових prefs незмінні; тестові видалені; приватний tar перед оновленням перевірено (65 файлів). [Протокол і APK SHA-256](../backend/evaluation/details/results/mobile.json). Із двох захоплених PNG лише перший придатний: знімок Compose-діалогу захопив неправильну область, його не включено до звіту. Це обмеження знімка, не провал перевірок історії. Сервер/reverse зупинено/прибрано. Release 0.3, Render, клінічну якість у цьому прогоні не перевіряли.
+
+## ЛР6 — 18.10.2026
+
+Набір `backend/evaluation/cases.json` і старий/поточний промпти зафіксовано до живого запуску. [Фактичні результати](../backend/evaluation/results/SUMMARY.md): після явних технічних повторів baseline 6/10, current 10/10 очікувань. Перший запуск: 7 HTTP 429 (9/10 валідних baseline і 4/10 current); повторено лише ці рядки з паузою 12 с у новий файл. Всього 27 запитів, усі спроби збережені. Початковий критерій без транспортних помилок не виконано; це не клінічна оцінка.
+
+Локально: `python -m unittest discover -s backend/tests -v` — **33 tests OK** до додаткової перевірки resume; після зміни runner виконано лише `python -m unittest discover -s backend/tests -p test_evaluation.py -v` — **5 tests OK**. Поточний набір містить 34 тести, але спільного фінального запуску 34 тестів не було. Dry-run runner перевірив 10 вводів/два промпти без мережі. Відоме StarletteDeprecationWarning не усувалося у цій задачі.
+
+Один сценарій ЛР6 у `Lab5PhoneScenarioTest.lab6InjuryClarificationChangesCategoryWithoutRewritingHistory`: можливий удар → заперечення ушкодження, зміна категорії, збереження двох окремих записів та два PNG. Після початкової збірки test APK (8 с) усунено інфраструктурний NETWORK (зник reverse), а потім власну помилку тесту DTO/domain; перезбірка test APK — **BUILD SUCCESSFUL, 3 с**. Фінальний запуск: **OK (1 test), 9.16 с** на Xiaomi 23030RAC7Y/Android 15 через справжній локальний FastAPI → Groq. Невдалі запуски збережені, [протоколи](../backend/evaluation/results/mobile.json). Встановлений debug APK має версію 0.2/code 2; оновлювався тільки test APK. Release 0.3/Render цим прогоном не перевірено. 65 початкових prefs незмінні, тестових prefs немає; сервер і reverse прибрані. Два PNG ЛР6 переглянуті. Production Kotlin/backend/API/dependencies не змінювалися.
+
 ## Запуск і автоматичні перевірки
 
 З кореня проєкту у PowerShell:

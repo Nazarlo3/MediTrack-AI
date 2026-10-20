@@ -120,6 +120,23 @@ class SymptomAnalysisControllerTest {
         assertEquals(1, repository.saves)
     }
 
+    @Test fun retryClarificationAndResetPreserveOnlyCurrentCheckDetails() = scenario { repository, controller, _ ->
+        controller.checkSymptom("Початковий опис", 3, 0); yield()
+        repository.respond = { throw SymptomFailure(SymptomError.NETWORK) }
+        controller.clarifySymptom("Стало краще"); yield()
+        val failed = repository.requests.last()
+        assertEquals(3, failed.durationDays)
+        assertEquals(0, failed.intensity)
+        repository.respond = { repository.result }
+        controller.retryLastCheck(); yield()
+        assertEquals(failed, repository.requests.last())
+        assertTrue(controller.historyState.value.first().description.contains("0/10"))
+        controller.reset()
+        controller.checkSymptom("Нова перевірка"); yield()
+        assertNull(repository.requests.last().durationDays)
+        assertNull(repository.requests.last().intensity)
+    }
+
     private fun scenario(block: suspend (FakeSymptomRepository, SymptomAnalysisController, MutableList<String?>) -> Unit) = runBlocking {
         val repository = FakeSymptomRepository()
         val errors = mutableListOf<String?>()

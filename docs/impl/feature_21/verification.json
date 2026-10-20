@@ -1,0 +1,57 @@
+{
+  "scope": "Exact Lab6 candidate in separate HEAD+selected-files copy; no external AI, device installation, push or deploy.",
+  "backend": {
+    "command": "python -B -m unittest discover -s backend/tests -v",
+    "environment": "existing lab5-venv",
+    "exit_code": 0,
+    "tests": 38,
+    "test_elapsed_seconds": 0.292,
+    "log_sha256": "4941471923efdc66e8906499fc37e0737ea5de89fb0314b2738c1fa58ea9fb14"
+  },
+  "android": {
+    "command": "gradlew.bat :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleDebugAndroidTest --offline",
+    "exit_code": 0,
+    "gradle_result": [
+      "BUILD SUCCESSFUL in 1m 5s"
+    ],
+    "elapsed_seconds": 65.641,
+    "unit_xml_counts": {
+      "tests": 61,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 44
+    },
+    "log_sha256": "12a411e95f4a788096b8aad7c83b83f9b5fc85dbafda0460923af74f402a61d3"
+  },
+  "evaluator_dry_run": {
+    "suites": [
+      "details",
+      "legacy"
+    ],
+    "cases_per_suite": 10,
+    "configurations_per_suite": 2,
+    "exit_codes": [
+      0,
+      0
+    ],
+    "external_calls": 0
+  },
+  "audit": {
+    "changed_files_scanned": 79,
+    "candidate_files": 55,
+    "credential_findings": [],
+    "email_findings": [],
+    "index_initially_empty": true
+  },
+  "whitespace": "Original mobile-attempt logs retain their blank final lines; all other staged paths pass git diff --cached --check.",
+  "preservation": "Unrelated working changes excluded; shared files staged only for Lab6 without replacing working files.",
+  "limits": [
+    "No new live AI/device tests; saved results remain historical evidence.",
+    "Python/Gradle warnings remain.",
+    "Full historical five Lab4 input texts are unavailable."
+  ]
+}

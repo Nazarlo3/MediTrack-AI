@@ -13,6 +13,8 @@ class AnalyzeSymptomUseCase(
     suspend operator fun invoke(input: SymptomInput): AnalysisOutcome {
         val request = input.copy(description = input.description.trim())
         if (request.description.length !in 3..500) throw SymptomFailure(SymptomError.INVALID_INPUT)
+        if ((request.durationDays != null && request.durationDays !in 1..30) ||
+            (request.intensity != null && request.intensity !in 0..10)) throw SymptomFailure(SymptomError.INVALID_INPUT)
         if (request.context.size > 6 || request.context.size % 2 != 0 ||
             request.context.withIndex().any { (index, turn) ->
                 turn.role != (if (index % 2 == 0) "user" else "assistant") ||
@@ -23,10 +25,14 @@ class AnalyzeSymptomUseCase(
         coroutineContext.ensureActive()
         val receivedAt = now()
         val summary = (result.category + ": " + result.explanation + " " + result.followUpQuestion.orEmpty()).take(1500)
+        val details = listOfNotNull(request.durationDays?.let { "Тривалість: $it дн." },
+            request.intensity?.let { "Інтенсивність: $it/10" })
+        val userDescription = request.description + if (details.isEmpty() || request.context.isNotEmpty()) ""
+            else "\n" + details.joinToString("; ")
         val next = request.context + listOf(
-            ConversationMessage("user", request.description), ConversationMessage("assistant", summary)
+            ConversationMessage("user", userDescription), ConversationMessage("assistant", summary)
         )
-        val inputs = request.context.filter { it.role == "user" }.map { it.content } + request.description
+        val inputs = request.context.filter { it.role == "user" }.map { it.content } + userDescription
         val description = if (inputs.size == 1) inputs.single() else inputs.mapIndexed { index, text ->
             (if (index == 0) "Початковий опис: " else "Уточнення " + index + ": ") + text
         }.joinToString("\n\n")

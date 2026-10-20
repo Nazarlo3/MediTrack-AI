@@ -36,6 +36,7 @@ class SymptomAnalysisController(
     private var lastRequest: SymptomInput? = null
     private var activeJob: Job? = null
     private var lastSuccess: SymptomUiState.Success? = null
+    private var initialDetails: SymptomInput? = null
 
     init {
         scope.launch {
@@ -52,12 +53,14 @@ class SymptomAnalysisController(
         }
     }
 
-    fun checkSymptom(description: String) {
+    fun checkSymptom(description: String, durationDays: Int? = null, intensity: Int? = null) {
         if (_uiState.value is SymptomUiState.Loading) return
         conversation = emptyList()
         lastSuccess = null
         _canClarify.value = false
-        submit(SymptomInput(description))
+        val input = SymptomInput(description, durationDays = durationDays, intensity = intensity)
+        initialDetails = input
+        submit(input)
     }
 
     fun clarifySymptom(description: String) {
@@ -66,7 +69,7 @@ class SymptomAnalysisController(
             _uiState.value = SymptomUiState.Error(SymptomError.CONTEXT_LIMIT)
             return
         }
-        submit(SymptomInput(description, conversation))
+        submit(SymptomInput(description, conversation, initialDetails?.durationDays, initialDetails?.intensity))
     }
 
     private fun submit(request: SymptomInput) {
@@ -150,6 +153,7 @@ class SymptomAnalysisController(
         conversation = emptyList()
         lastRequest = null
         lastSuccess = null
+        initialDetails = null
         _canClarify.value = false
         _uiState.value = SymptomUiState.Idle
     }

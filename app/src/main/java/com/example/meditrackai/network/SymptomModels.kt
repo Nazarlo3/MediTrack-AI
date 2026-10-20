@@ -7,7 +7,9 @@ import com.google.gson.annotations.SerializedName
 @Immutable
 data class SymptomRequest(
     val description: String,
-    val context: List<ConversationTurn> = emptyList()
+    val context: List<ConversationTurn> = emptyList(),
+    @SerializedName("duration_days") val durationDays: Int? = null,
+    val intensity: Int? = null
 )
 
 @Immutable
@@ -20,7 +22,8 @@ data class SymptomResponse(
     val urgency: String? = "звичайне",
     val disclaimer: String = "Це не медичний діагноз. У разі проблем зі здоров'ям зверніться до лікаря.",
     @SerializedName("follow_up_question") val followUpQuestion: String? = null,
-    @SerializedName("context_used") val contextUsed: Boolean? = null
+    @SerializedName("context_used") val contextUsed: Boolean? = null,
+    @SerializedName("details_used") val detailsUsed: Boolean? = null
 )
 
 @Immutable

@@ -130,7 +130,8 @@ class SymptomViewModel(
         }
     }
 
-    fun checkSymptom(description: String) = analysis.checkSymptom(description)
+    fun checkSymptom(description: String, durationDays: Int? = null, intensity: Int? = null) =
+        analysis.checkSymptom(description, durationDays, intensity)
     fun clarifySymptom(description: String) = analysis.clarifySymptom(description)
     fun retryLastCheck() = analysis.retryLastCheck()
     fun cancelAnalysis() = analysis.cancelAnalysis()

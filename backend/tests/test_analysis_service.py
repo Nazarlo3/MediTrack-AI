@@ -54,3 +54,15 @@ class AnalysisServiceTests(unittest.TestCase):
         self.assertIsInstance(real, AIProvider)
         self.assertIsInstance(fake, AIProvider)
         self.assertNotIn("synthetic-test-key", repr(real.settings))
+
+    def test_domain_rejects_invalid_details_before_provider_and_accepts_zero(self):
+        fake = FakeProvider()
+        service = AnalysisService(fake)
+        for kwargs in ({"duration_days": 0}, {"duration_days": 31}, {"duration_days": True},
+                       {"intensity": -1}, {"intensity": 11}, {"intensity": "4"}):
+            with self.assertRaises(InvalidInputError):
+                service.analyze(AnalysisInput("Синтетичний опис", **kwargs))
+        self.assertEqual([], fake.calls)
+        result = service.analyze(AnalysisInput("Синтетичний опис", duration_days=30, intensity=0))
+        self.assertTrue(result.details_used)
+        self.assertEqual(0, fake.calls[0].intensity)

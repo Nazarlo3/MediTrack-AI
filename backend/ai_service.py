@@ -108,6 +108,32 @@ follow_up_question: одне коротке конкретне питання у
 {"category":"<точна категорія зі списку>","explanation":"<пояснення>","urgency":"<звичайне|увага|терміново>","follow_up_question":null}
 """.strip()
 
+SYSTEM_PROMPT += """
+
+Додаткові структуровані дані:
+Користувач може окремо надати тривалість 1–30 днів та інтенсивність 0–10.
+Це самооцінка вираженості симптому, не діагностична шкала та не ймовірність.
+Враховуй надані значення в поясненні; не запитуй повторно вже вказані дані.
+Щоб користувач міг перевірити правильність розуміння, у explanation збережи значення
+у форматі «N дн.» та «N/10» для кожного наданого поля. Не додавай відсутні значення.
+Не визначай urgency автоматично лише за цими числами; застосовуй попередні правила
+до всього опису. Не роби діагнозу з тривалості або інтенсивності. Якщо дані суперечливі,
+поясни невизначеність і постав одне питання, а не вигадуй причину.
+У розмові це початкові атрибути перевірки: пізніші уточнення можуть їх виправити.
+"""
+
+
+def build_user_message(request: AnalysisInput) -> str:
+    """Prepare optional attributes without changing the legacy description-only request."""
+    details = []
+    if request.duration_days is not None:
+        details.append(f"Тривалість: {request.duration_days} дн.")
+    if request.intensity is not None:
+        details.append(f"Інтенсивність: {request.intensity}/10")
+    if not details:
+        return request.description
+    return request.description + "\n\nПочаткові додаткові дані (самооцінка):\n" + "\n".join(details)
+
 
 class GroqProvider:
     """Only this adapter knows the external HTTP API and provider JSON format."""
@@ -125,7 +151,7 @@ class GroqProvider:
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 *(asdict(turn) for turn in request.context),
-                {"role": "user", "content": request.description},
+                {"role": "user", "content": build_user_message(request)},
             ],
             "temperature": 0.1,
             "max_tokens": 400,

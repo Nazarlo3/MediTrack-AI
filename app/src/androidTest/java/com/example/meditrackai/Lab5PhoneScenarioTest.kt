@@ -15,6 +15,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.example.meditrackai.data.LocalDataStore
 import com.example.meditrackai.data.symptoms.DefaultSymptomRepository
 import com.example.meditrackai.data.symptoms.SharedPreferencesSymptomHistorySource
+import com.example.meditrackai.data.symptoms.toDomain
 import com.example.meditrackai.domain.symptoms.AnalyzeSymptomUseCase
 import com.example.meditrackai.network.*
 import com.example.meditrackai.ui.SymptomCheckScreen
@@ -54,7 +55,7 @@ class Lab5PhoneScenarioTest {
     private lateinit var api: ControlledApi
     private lateinit var vm: SymptomViewModel
 
-    private fun scenario(block: () -> Unit) {
+    private fun scenario(label: String = "ЛР5", block: () -> Unit) {
         assumeTrue("Explicit opt-in required", InstrumentationRegistry.getArguments().getString("lab5Phone") == "true")
         val baseUrl = requireNotNull(InstrumentationRegistry.getArguments().getString("lab5BaseUrl"))
         require(baseUrl == "http://127.0.0.1:18765/") { "Only the local test backend is permitted" }
@@ -71,7 +72,7 @@ class Lab5PhoneScenarioTest {
             compose.setContent {
                 MaterialTheme {
                     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
-                        Text("ЛР5 • СИНТЕТИЧНИЙ ТЕСТ • локальний backend → Groq", style = MaterialTheme.typography.labelSmall)
+                        Text("$label • СИНТЕТИЧНИЙ ТЕСТ • локальний backend → Groq", style = MaterialTheme.typography.labelSmall)
                         Box(Modifier.weight(1f)) { SymptomCheckScreen(viewModel = vm) }
                     }
                 }
@@ -162,9 +163,70 @@ class Lab5PhoneScenarioTest {
         assertEquals(1, api.realCalls)
     }
 
-    private fun save(name: String) {
+    /** Reuses the isolated local-backend harness; run this method alone for Lab6. */
+    @Test fun lab6InjuryClarificationChangesCategoryWithoutRewritingHistory() = scenario("ЛР6") {
+        send("розбив монітор ногою")
+        waitForSuccess(1)
+        val initial = vm.uiState.value as SymptomUiState.Success
+        assertEquals("травми та ушкодження", initial.result.category)
+        assertEquals("увага", initial.result.urgency)
+        assertFalse(initial.result.followUpQuestion.isNullOrBlank())
+        compose.onAllNodesWithText(initial.result.explanation)[0].performScrollTo().assertIsDisplayed()
+        save("04_lab6_initial.png")
+        compose.onNodeWithText("Ваше уточнення").performScrollTo().performTextReplacement(
+            "Ні, взагалі нічого не болить, не травмувався. Питаю лише про ремонт."
+        )
+        compose.onNodeWithText("Надіслати уточнення").performScrollTo().performClick()
+        waitForSuccess(2)
+        val clarified = vm.uiState.value as SymptomUiState.Success
+        assertTrue(clarified.result.contextUsed == true)
+        assertEquals("інше", clarified.result.category)
+        assertEquals("звичайне", clarified.result.urgency)
+        compose.onAllNodesWithText(clarified.result.explanation)[0].performScrollTo().assertIsDisplayed()
+        save("05_lab6_clarified.png")
+        val history = runBlocking { LocalDataStore(application).load().first }
+        assertEquals(2, history.size)
+        assertEquals(initial.result, history.last().response.toDomain())
+        assertEquals(clarified.result, history.first().response.toDomain())
+        assertTrue(history.first().description.contains("Уточнення 1:"))
+        assertEquals(2, api.realCalls)
+    }
+
+    @Test fun lab6DurationAndIntensityReachAIAndHistory() = scenario("ЛР6 • тривалість та інтенсивність") {
+        compose.onNodeWithText("Тривалість, днів").performScrollTo().performTextReplacement("31")
+        compose.onNodeWithText("Перевірити").assertIsNotEnabled()
+        compose.onNodeWithText("Тривалість, днів").performScrollTo().performTextReplacement("3")
+        compose.onNodeWithText("Інтенсивність").performScrollTo().performTextReplacement("5")
+        send("Вдарив гомілку об край ліжка, болить у місці удару. Рани немає.")
+        waitForSuccess(1)
+        val initial = vm.uiState.value as SymptomUiState.Success
+        assertEquals("травми та ушкодження", initial.result.category)
+        assertEquals(true, initial.result.detailsUsed)
+        assertTrue(initial.result.explanation.contains("3 дн."))
+        assertTrue(initial.result.explanation.contains("5/10"))
+        compose.onAllNodesWithText(initial.result.explanation)[0].performScrollTo().assertIsDisplayed()
+        save("06_lab6_details.png")
+        compose.onNodeWithText("Ваше уточнення").performScrollTo().performTextReplacement("Після відпочинку стало легше.")
+        compose.onNodeWithText("Надіслати уточнення").performScrollTo().performClick()
+        waitForSuccess(2)
+        val clarified = vm.uiState.value as SymptomUiState.Success
+        assertEquals(true, clarified.result.contextUsed)
+        assertEquals(true, clarified.result.detailsUsed)
+        val history = runBlocking { LocalDataStore(application).load().first }
+        assertEquals(2, history.size)
+        assertEquals(initial.result, history.last().response.toDomain())
+        assertTrue(history.first().description.contains("Тривалість: 3 дн.; Інтенсивність: 5/10"))
+        compose.onAllNodesWithText("Відкрити деталі")[0].performScrollTo().performClick()
+        compose.onNodeWithText("Збережений результат").assertIsDisplayed()
+        save("07_lab6_details_history.png", historyDialog = true)
+        assertEquals(2, api.realCalls)
+    }
+
+    private fun save(name: String, historyDialog: Boolean = false) {
         compose.waitForIdle()
-        val image = compose.onRoot().captureToImage().asAndroidBitmap()
+        val root = if (historyDialog) compose.onNode(isRoot() and hasAnyDescendant(hasText("Збережений результат")))
+            else compose.onRoot()
+        val image = root.captureToImage().asAndroidBitmap()
         val directory = File(target.cacheDir, "lab5-phone")
         check(directory.isDirectory || directory.mkdirs())
         File(directory, name).outputStream().use { check(image.compress(Bitmap.CompressFormat.PNG, 100, it)) }

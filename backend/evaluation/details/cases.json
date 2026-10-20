@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "provenance": "Fixed synthetic engineering cases before implementation on 2026-10-20. The five regressions are identical to feature_15, not recovered Lab4 inputs. No clinical labels.",
+  "acceptance": {"regression":5,"extension":5,"context":0,"valid_responses":10},
+  "cases": [
+    {"id":"r1_fatigue","group":"regression","description":"Після довгої прогулянки трохи втомився, після відпочинку краще. Інших скарг немає.","expected":{"category":"загальне нездужання"}},
+    {"id":"r2_cough","group":"regression","description":"Другий день кашляю. Дихати можу нормально, травми не було.","expected":{"category":"респіраторне"}},
+    {"id":"r3_digestion","group":"regression","description":"Після їжі відчуваю здуття живота й дискомфорт у животі.","expected":{"category":"шлунково-кишкове"}},
+    {"id":"r4_skin","group":"regression","description":"На передпліччі суха шкіра й свербіж, без травми та відомого зв'язку з алергеном.","expected":{"category":"шкірне"}},
+    {"id":"r5_headache","group":"regression","description":"Після роботи за комп'ютером трохи болить голова. Удару головою не було.","expected":{"category":"неврологічне"}},
+    {"id":"d1_short_mild","group":"extension","description":"Болить голова, травми не було.","duration_days":1,"intensity":2,"expected":{"category":"неврологічне","details_used":true,"explanation_contains":["1 дн.","2/10"]}},
+    {"id":"d2_long_strong","group":"extension","description":"Болить голова, травми не було.","duration_days":14,"intensity":8,"expected":{"category":"неврологічне","details_used":true,"explanation_contains":["14 дн.","8/10"]}},
+    {"id":"d3_clear_injury","group":"extension","description":"Вдарив гомілку об край ліжка, болить у місці удару. Рани немає.","duration_days":2,"intensity":5,"expected":{"category":"травми та ушкодження","details_used":true,"explanation_contains":["2 дн.","5/10"]}},
+    {"id":"d4_duration_only","group":"extension","description":"Суха шкіра на передпліччі та свербіж. Травми й відомої алергії немає.","duration_days":3,"expected":{"category":"шкірне","details_used":true,"explanation_contains":["3 дн."]}},
+    {"id":"d5_intensity_only","group":"extension","description":"Після роботи за комп'ютером печуть обидва ока. Травми не було.","intensity":4,"expected":{"category":"офтальмологічне","details_used":true,"explanation_contains":["4/10"]}}
+  ]
+}

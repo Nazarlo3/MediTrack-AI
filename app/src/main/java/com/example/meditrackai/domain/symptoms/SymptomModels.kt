@@ -3,7 +3,12 @@ package com.example.meditrackai.domain.symptoms
 import java.util.UUID
 
 data class ConversationMessage(val role: String, val content: String)
-data class SymptomInput(val description: String, val context: List<ConversationMessage> = emptyList())
+data class SymptomInput(
+    val description: String,
+    val context: List<ConversationMessage> = emptyList(),
+    val durationDays: Int? = null,
+    val intensity: Int? = null
+)
 
 data class SymptomAnalysis(
     val category: String,
@@ -11,7 +16,8 @@ data class SymptomAnalysis(
     val urgency: String = "звичайне",
     val disclaimer: String = "Це не медичний діагноз. У разі проблем зі здоров'ям зверніться до лікаря.",
     val followUpQuestion: String? = null,
-    val contextUsed: Boolean? = null
+    val contextUsed: Boolean? = null,
+    val detailsUsed: Boolean? = null
 )
 
 data class SymptomHistoryEntry(
@@ -24,7 +30,7 @@ data class SymptomHistoryEntry(
 )
 
 enum class SymptomError {
-    INVALID_INPUT, CONTEXT_LIMIT, NETWORK, SERVER, INVALID_RESPONSE, CONTEXT_UNSUPPORTED, STORAGE, UNEXPECTED
+    INVALID_INPUT, CONTEXT_LIMIT, NETWORK, SERVER, INVALID_RESPONSE, CONTEXT_UNSUPPORTED, DETAILS_UNSUPPORTED, STORAGE, UNEXPECTED
 }
 
 class SymptomFailure(val reason: SymptomError) : Exception(reason.name)

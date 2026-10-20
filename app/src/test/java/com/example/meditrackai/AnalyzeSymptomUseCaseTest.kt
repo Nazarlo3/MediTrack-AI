@@ -46,4 +46,24 @@ class AnalyzeSymptomUseCaseTest {
         try { block(); fail("Expected domain failure") } catch (e: SymptomFailure) { return e.reason }
         error("No failure")
     }
+
+    @Test fun optionalDetailsAreValidatedAndPersistedInContextAndHistory() = runBlocking {
+        val outcome = analyze(SymptomInput("Синтетичний опис", durationDays = 30, intensity = 0))
+        assertEquals(0, repository.requests.single().intensity)
+        assertTrue(outcome.historyEntry.description.contains("Тривалість: 30 дн.; Інтенсивність: 0/10"))
+        assertEquals(outcome.historyEntry.description, outcome.nextContext.first().content)
+        val clarification = analyze(SymptomInput("Стало краще", outcome.nextContext, 30, 0))
+        assertTrue(clarification.historyEntry.description.contains("30 дн."))
+        assertEquals(1, Regex("Тривалість:").findAll(clarification.historyEntry.description).count())
+    }
+
+    @Test fun outOfRangeDetailsNeverReachRepository() = runBlocking {
+        listOf(SymptomInput("Синтетичний опис", durationDays = 0),
+            SymptomInput("Синтетичний опис", durationDays = 31),
+            SymptomInput("Синтетичний опис", intensity = -1),
+            SymptomInput("Синтетичний опис", intensity = 11)).forEach {
+            assertEquals(SymptomError.INVALID_INPUT, failure { analyze(it) })
+        }
+        assertTrue(repository.requests.isEmpty())
+    }
 }

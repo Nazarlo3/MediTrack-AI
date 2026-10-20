@@ -16,6 +16,7 @@ sealed class SymptomUiState {
             SymptomError.SERVER -> "Сервіс тимчасово недоступний. Спробуйте ще раз."
             SymptomError.INVALID_RESPONSE -> "Сервер повернув неповний або некоректний результат. Спробуйте ще раз."
             SymptomError.CONTEXT_UNSUPPORTED -> "Сервіс ще не підтримує уточнення. Спробуйте після оновлення сервера."
+            SymptomError.DETAILS_UNSUPPORTED -> "Сервіс ще не підтримує тривалість та інтенсивність. Оновіть сервер або перевірте опис без цих полів."
             SymptomError.STORAGE -> "Не вдалося зберегти локальні дані."
             SymptomError.UNEXPECTED -> "Щось пішло не так. Спробуйте ще раз."
         }

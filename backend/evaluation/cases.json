@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "provenance": "New synthetic engineering set, fixed before Lab6 evaluation; not recovered historical Lab4 inputs. Assistant context is a handcrafted fixture, not a model output.",
+  "acceptance": {"regression": 5, "extension": 3, "context": 2, "valid_responses": 10},
+  "cases": [
+    {"id":"r1_fatigue","group":"regression","description":"Після довгої прогулянки трохи втомився, після відпочинку краще. Інших скарг немає.","expected":{"category":"загальне нездужання"}},
+    {"id":"r2_cough","group":"regression","description":"Другий день кашляю. Дихати можу нормально, травми не було.","expected":{"category":"респіраторне"}},
+    {"id":"r3_digestion","group":"regression","description":"Після їжі відчуваю здуття живота й дискомфорт у животі.","expected":{"category":"шлунково-кишкове"}},
+    {"id":"r4_skin","group":"regression","description":"На передпліччі суха шкіра й свербіж, без травми та відомого зв'язку з алергеном.","expected":{"category":"шкірне"}},
+    {"id":"r5_headache","group":"regression","description":"Після роботи за комп'ютером трохи болить голова. Удару головою не було.","expected":{"category":"неврологічне"}},
+    {"id":"e1_foot_contact","group":"extension","description":"розбив монітор ногою","expected":{"category":"травми та ушкодження","urgency":"увага","question_required":true}},
+    {"id":"e2_teeth","group":"extension","description":"Болить зуб і набрякли ясна.","expected":{"category":"стоматологічне"}},
+    {"id":"e3_eyes","group":"extension","description":"Після роботи за комп'ютером печуть обидва ока. Травми не було.","expected":{"category":"офтальмологічне"}},
+    {"id":"c1_eye_reference","group":"context","description":"В обох, після роботи за комп'ютером. Травми не було.","context":[{"role":"user","content":"Печуть очі."},{"role":"assistant","content":"Це в одному оці чи в обох? Чи була травма?"}],"expected":{"category":"офтальмологічне"}},
+    {"id":"c2_negation","group":"context","description":"Ні, взагалі нічого не болить, не травмувався. Питаю лише про ремонт.","context":[{"role":"user","content":"Розбив монітор ногою."},{"role":"assistant","content":"Можливе ушкодження, але воно не підтверджене. Чи є біль або рана?"}],"expected":{"category":"інше","urgency":"звичайне"}}
+  ]
+}

@@ -43,6 +43,23 @@ class SymptomRepositoryTest {
         assertEquals(SymptomError.NETWORK, failure { repository.analyze(SymptomInput("Опис")) })
     }
 
+    @Test fun detailsNeedServerAcknowledgementAndSurviveJsonAndHistoryMapping() = runBlocking {
+        val input = SymptomInput("Синтетичний опис", durationDays = 3, intensity = 0)
+        assertEquals(SymptomError.DETAILS_UNSUPPORTED, failure { repository.analyze(input) })
+        response = { Response.success(dto.copy(detailsUsed = true)) }
+        val result = repository.analyze(input)
+        assertEquals(3, request?.durationDays)
+        assertEquals(0, request?.intensity)
+        val json = com.google.gson.Gson().toJson(request)
+        assertTrue(json.contains("\"duration_days\":3"))
+        assertTrue(json.contains("\"intensity\":0"))
+        assertEquals(true, result.detailsUsed)
+        val entry = SymptomHistoryEntry("12:00", "Тривалість: 3 дн.; Інтенсивність: 0/10", result)
+        val codec = com.example.meditrackai.data.HistoryJsonCodec()
+        assertEquals(entry, codec.decode(codec.encode(listOf(entry.toStoredItem()))).single().toDomain())
+        assertFalse(com.google.gson.Gson().toJson(SymptomInput("Старий опис").toRequest()).contains("duration_days"))
+    }
+
     @Test fun rejectsIncompleteResponseAndUnsupportedContext() = runBlocking {
         response = { Response.success(dto.copy(urgency = null)) }
         assertEquals(SymptomError.INVALID_RESPONSE, failure { repository.analyze(SymptomInput("Опис")) })

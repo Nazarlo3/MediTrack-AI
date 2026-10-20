@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-20",
+  "synthetic_only": true,
+  "device": {
+    "model": "23030RAC7Y",
+    "android": "15",
+    "versionName": "0.3",
+    "versionCode": "3",
+    "debugApkSha256": "de72ffc72259321063bd9a0024046c5da8123e223e9908e9204cc057841b7494",
+    "testApkSha256": "6e0662361a298c52e530dfd6fc87d17f474906b4d810ceaf8e50fb7c673913ba"
+  },
+  "attempts": [
+    {
+      "file": "mobile-attempt-1.txt",
+      "passed": true
+    }
+  ],
+  "preservation": {
+    "originalFiles": 65,
+    "changedFiles": 0,
+    "newFiles": 0,
+    "testPreferencesLeft": 0,
+    "userDataUnchanged": true
+  },
+  "private_backup_verified_files": 65,
+  "backend_unit_tests": 38,
+  "android_unit_tests": 61,
+  "android_unit_failures": 0,
+  "verified": [
+    "UI rejects 31 days",
+    "3 days and 5/10 in live AI explanation",
+    "details_used",
+    "context_used",
+    "two independent history records",
+    "history details dialog",
+    "X-Request-ID"
+  ],
+  "limits": "Local FastAPI -> real Groq, debug 0.3; no Render deploy, release install, clinical validation or Git commit."
+}

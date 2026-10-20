@@ -32,7 +32,7 @@ class ApiTests(unittest.TestCase):
         context = [{"role": "user", "content": "Синтетичний опис"}, {"role": "assistant", "content": "Уточніть"}]
         response = self.client.post("/analyze-symptom", json={"description": "Тестове уточнення", "context": context})
         self.assertEqual(200, response.status_code)
-        self.assertEqual({"category", "explanation", "urgency", "disclaimer", "follow_up_question", "context_used"}, set(response.json()))
+        self.assertEqual({"category", "explanation", "urgency", "disclaimer", "follow_up_question", "context_used", "details_used"}, set(response.json()))
         self.assertTrue(response.json()["context_used"])
         self.assertEqual(2, len(self.fake.calls[0].context))
         self.assertEqual("Тестове уточнення", self.fake.calls[0].description)
@@ -42,6 +42,21 @@ class ApiTests(unittest.TestCase):
         response = self.client.post("/analyze-symptom", json={"description": "Синтетичний опис"})
         self.assertEqual(503, response.status_code)
         self.assertEqual({"detail": "AI-сервіс тимчасово недоступний"}, response.json())
+
+    def test_optional_details_are_strict_and_forwarded_with_server_acknowledgement(self):
+        for payload in ({"duration_days": 1, "intensity": 0}, {"duration_days": 30}, {"intensity": 10}, {}):
+            with self.subTest(payload=payload):
+                response = self.client.post("/analyze-symptom", json={"description": "Синтетичний опис", **payload})
+                self.assertEqual(200, response.status_code)
+                self.assertEqual(bool(payload), response.json()["details_used"])
+                self.assertEqual(payload.get("duration_days"), self.fake.calls[-1].duration_days)
+                self.assertEqual(payload.get("intensity"), self.fake.calls[-1].intensity)
+        calls = len(self.fake.calls)
+        for field, invalid in (("duration_days", [0, 31, True, 1.5, "3"]), ("intensity", [-1, 11, False, 2.5, "4"])):
+            for value in invalid:
+                response = self.client.post("/analyze-symptom", json={"description": "Синтетичний опис", field: value})
+                self.assertEqual(422, response.status_code)
+        self.assertEqual(calls, len(self.fake.calls))
 
     def test_validation_and_empty_description_do_not_call_provider(self):
         cases = [({}, 422), ({"description": ""}, 422), ({"description": "ab"}, 422),

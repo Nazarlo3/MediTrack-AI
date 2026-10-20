@@ -132,6 +132,13 @@ class AIServiceTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 ai_service._validate_ai_result({**self.valid, "follow_up_question": question})
 
+    def test_optional_details_prepare_separate_ai_message_without_fabricating_missing_fields(self):
+        self.assertEqual("Синтетичний опис", ai_service.build_user_message(AnalysisInput("Синтетичний опис")))
+        message = ai_service.build_user_message(AnalysisInput("Синтетичний опис", duration_days=3, intensity=0))
+        self.assertIn("3 дн.", message)
+        self.assertIn("0/10", message)
+        self.assertNotIn("Інтенсивність:", ai_service.build_user_message(AnalysisInput("Синтетичний опис", duration_days=1)))
+
     def test_request_context_validation_and_legacy_compatibility(self):
         from models import SymptomRequest
         from pydantic import ValidationError

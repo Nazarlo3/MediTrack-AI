@@ -17,6 +17,8 @@ class DefaultSymptomRepository(
         val body = response.body() ?: throw SymptomFailure(SymptomError.INVALID_RESPONSE)
         val result = body.toDomain()
         if (input.context.isNotEmpty() && result.contextUsed != true) throw SymptomFailure(SymptomError.CONTEXT_UNSUPPORTED)
+        if ((input.durationDays != null || input.intensity != null) && result.detailsUsed != true)
+            throw SymptomFailure(SymptomError.DETAILS_UNSUPPORTED)
         result
     } catch (e: CancellationException) { throw e }
     catch (e: SymptomFailure) { throw e }

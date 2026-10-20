@@ -23,9 +23,12 @@ class SymptomRequest(BaseModel):
         description="Опис симптому від користувача (неідентифікаційний, без персональних даних).",
     )
     context: list[ConversationTurn] = Field(default_factory=list, max_length=6)
+    duration_days: int | None = Field(default=None, ge=1, le=30, strict=True)
+    intensity: int | None = Field(default=None, ge=0, le=10, strict=True)
 
     def to_domain(self) -> AnalysisInput:
-        return AnalysisInput(self.description, tuple(ConversationMessage(turn.role, turn.content) for turn in self.context))
+        return AnalysisInput(self.description, tuple(ConversationMessage(turn.role, turn.content) for turn in self.context),
+                             self.duration_days, self.intensity)
 
     @field_validator("context")
     @classmethod
@@ -53,12 +56,13 @@ class SymptomResponse(BaseModel):
     )
     follow_up_question: str | None = Field(default=None, max_length=300)
     context_used: bool = False
+    details_used: bool = False
 
     @classmethod
     def from_domain(cls, result: AnalysisResult) -> "SymptomResponse":
         return cls(category=result.category, explanation=result.explanation, urgency=result.urgency,
                    disclaimer=result.disclaimer, follow_up_question=result.follow_up_question,
-                   context_used=result.context_used)
+                   context_used=result.context_used, details_used=result.details_used)
 
 
 class ErrorResponse(BaseModel):

@@ -1,0 +1,57 @@
+INSTRUMENTATION_STATUS: class=com.example.meditrackai.Lab5PhoneScenarioTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+com.example.meditrackai.Lab5PhoneScenarioTest:
+INSTRUMENTATION_STATUS: test=lab6InjuryClarificationChangesCategoryWithoutRewritingHistory
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.example.meditrackai.Lab5PhoneScenarioTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: expected:<SymptomAnalysis(category=травми та ушкодження, explanation=Описана дія передбачає удар ногою об предмет, що може призвести до механічного пошкодження кінцівки. Без додаткових симптомів важко оцінити ступінь травми, тому потрібне уточнення самопочуття., urgency=увага, disclaimer=Це не медичний діагноз. У разі проблем зі здоров'ям зверніться до лікаря., followUpQuestion=Чи відчуваєте ви біль, набряк, оніміння або труднощі при ходьбі в місці удару?, contextUsed=false)> but was:<SymptomResponse(category=травми та ушкодження, explanation=Описана дія передбачає удар ногою об предмет, що може призвести до механічного пошкодження кінцівки. Без додаткових симптомів важко оцінити ступінь травми, тому потрібне уточнення самопочуття., urgency=увага, disclaimer=Це не медичний діагноз. У разі проблем зі здоров'ям зверніться до лікаря., followUpQuestion=Чи відчуваєте ви біль, набряк, оніміння або труднощі при ходьбі в місці удару?, contextUsed=false)>
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotEquals(Assert.java:835)
+	at org.junit.Assert.assertEquals(Assert.java:120)
+	at org.junit.Assert.assertEquals(Assert.java:146)
+	at com.example.meditrackai.Lab5PhoneScenarioTest.lab6InjuryClarificationChangesCategoryWithoutRewritingHistory$lambda$18(Lab5PhoneScenarioTest.kt:188)
+	at com.example.meditrackai.Lab5PhoneScenarioTest$$ExternalSyntheticLambda10.invoke(D8$$SyntheticClass:0)
+	at com.example.meditrackai.Lab5PhoneScenarioTest.scenario(Lab5PhoneScenarioTest.kt:81)
+	at com.example.meditrackai.Lab5PhoneScenarioTest.lab6InjuryClarificationChangesCategoryWithoutRewritingHistory(Lab5PhoneScenarioTest.kt:166)
+
+INSTRUMENTATION_STATUS: stream=
+Error in lab6InjuryClarificationChangesCategoryWithoutRewritingHistory(com.example.meditrackai.Lab5PhoneScenarioTest):
+java.lang.AssertionError: expected:<SymptomAnalysis(category=травми та ушкодження, explanation=Описана дія передбачає удар ногою об предмет, що може призвести до механічного пошкодження кінцівки. Без додаткових симптомів важко оцінити ступінь травми, тому потрібне уточнення самопочуття., urgency=увага, disclaimer=Це не медичний діагноз. У разі проблем зі здоров'ям зверніться до лікаря., followUpQuestion=Чи відчуваєте ви біль, набряк, оніміння або труднощі при ходьбі в місці удару?, contextUsed=false)> but was:<SymptomResponse(category=травми та ушкодження, explanation=Описана дія передбачає удар ногою об предмет, що може призвести до механічного пошкодження кінцівки. Без додаткових симптомів важко оцінити ступінь травми, тому потрібне уточнення самопочуття., urgency=увага, disclaimer=Це не медичний діагноз. У разі проблем зі здоров'ям зверніться до лікаря., followUpQuestion=Чи відчуваєте ви біль, набряк, оніміння або труднощі при ходьбі в місці удару?, contextUsed=false)>
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotEquals(Assert.java:835)
+	at org.junit.Assert.assertEquals(Assert.java:120)
+	at org.junit.Assert.assertEquals(Assert.java:146)
+	at com.example.meditrackai.Lab5PhoneScenarioTest.lab6InjuryClarificationChangesCategoryWithoutRewritingHistory$lambda$18(Lab5PhoneScenarioTest.kt:188)
+	at com.example.meditrackai.Lab5PhoneScenarioTest$$ExternalSyntheticLambda10.invoke(D8$$SyntheticClass:0)
+	at com.example.meditrackai.Lab5PhoneScenarioTest.scenario(Lab5PhoneScenarioTest.kt:81)
+	at com.example.meditrackai.Lab5PhoneScenarioTest.lab6InjuryClarificationChangesCategoryWithoutRewritingHistory(Lab5PhoneScenarioTest.kt:166)
+
+INSTRUMENTATION_STATUS: test=lab6InjuryClarificationChangesCategoryWithoutRewritingHistory
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 9,608
+There was 1 failure:
+1) lab6InjuryClarificationChangesCategoryWithoutRewritingHistory(com.example.meditrackai.Lab5PhoneScenarioTest)
+java.lang.AssertionError: expected:<SymptomAnalysis(category=травми та ушкодження, explanation=Описана дія передбачає удар ногою об предмет, що може призвести до механічного пошкодження кінцівки. Без додаткових симптомів важко оцінити ступінь травми, тому потрібне уточнення самопочуття., urgency=увага, disclaimer=Це не медичний діагноз. У разі проблем зі здоров'ям зверніться до лікаря., followUpQuestion=Чи відчуваєте ви біль, набряк, оніміння або труднощі при ходьбі в місці удару?, contextUsed=false)> but was:<SymptomResponse(category=травми та ушкодження, explanation=Описана дія передбачає удар ногою об предмет, що може призвести до механічного пошкодження кінцівки. Без додаткових симптомів важко оцінити ступінь травми, тому потрібне уточнення самопочуття., urgency=увага, disclaimer=Це не медичний діагноз. У разі проблем зі здоров'ям зверніться до лікаря., followUpQuestion=Чи відчуваєте ви біль, набряк, оніміння або труднощі при ходьбі в місці удару?, contextUsed=false)>
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotEquals(Assert.java:835)
+	at org.junit.Assert.assertEquals(Assert.java:120)
+	at org.junit.Assert.assertEquals(Assert.java:146)
+	at com.example.meditrackai.Lab5PhoneScenarioTest.lab6InjuryClarificationChangesCategoryWithoutRewritingHistory$lambda$18(Lab5PhoneScenarioTest.kt:188)
+	at com.example.meditrackai.Lab5PhoneScenarioTest$$ExternalSyntheticLambda10.invoke(D8$$SyntheticClass:0)
+	at com.example.meditrackai.Lab5PhoneScenarioTest.scenario(Lab5PhoneScenarioTest.kt:81)
+	at com.example.meditrackai.Lab5PhoneScenarioTest.lab6InjuryClarificationChangesCategoryWithoutRewritingHistory(Lab5PhoneScenarioTest.kt:166)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1
+
