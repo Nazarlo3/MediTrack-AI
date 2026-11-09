@@ -30,7 +30,6 @@ fun SymptomCheckScreen(
     onThemeChange: (com.example.meditrackai.data.ThemeMode) -> Unit = {},
     collectionSettings: com.example.meditrackai.data.DataCollectionSettings? = null
 ) {
-    if (collectionSettings != null) CollectionNotice(collectionSettings)
     var showSettings by rememberSaveable { mutableStateOf(false) }
     if (showSettings) {
         AlertDialog(onDismissRequest = { showSettings = false }, title = { Text("Налаштування") },

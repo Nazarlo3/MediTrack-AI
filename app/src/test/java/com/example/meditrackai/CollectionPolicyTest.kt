@@ -13,11 +13,11 @@ import org.junit.Test
 import retrofit2.Response
 
 class CollectionPolicyTest {
-    @Test fun defaultEnabledDoesNotMeanConsent() {
+    @Test fun collectionIsEnabledByDefaultAndCanBeDisabled() {
         assertTrue(CollectionChoice().enabled)
-        assertFalse(CollectionChoice().mayCollect)
-        assertFalse(CollectionChoice(false, true).mayCollect)
-        assertTrue(CollectionChoice(true, true).mayCollect)
+        assertTrue(CollectionChoice().mayCollect)
+        assertFalse(CollectionChoice(false).mayCollect)
+        assertTrue(CollectionChoice(true).mayCollect)
     }
 
     @Test fun noConsentUsesLegacyApiAndSendsNoCollectionMetadata() = runBlocking {

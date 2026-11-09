@@ -9,14 +9,14 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.CancellationException
 import java.security.SecureRandom
 
-data class CollectionChoice(val enabled: Boolean = true, val acknowledged: Boolean = false) {
-    val mayCollect: Boolean get() = enabled && acknowledged
+data class CollectionChoice(val enabled: Boolean = true) {
+    val mayCollect: Boolean get() = enabled
 }
 
 /** Capability is private, persisted before use and never shown in UI/logs. */
 class DataCollectionSettings(context: Context) : CollectionPreferences {
     private val prefs = context.applicationContext.getSharedPreferences("meditrack_collection", Context.MODE_PRIVATE)
-    private val state = MutableStateFlow(CollectionChoice(prefs.getBoolean("enabled", true), prefs.getInt("noticeVersion", 0) == 2))
+    private val state = MutableStateFlow(CollectionChoice(prefs.getBoolean("enabled", true)))
     val choice: StateFlow<CollectionChoice> = state
     private val statusState = MutableStateFlow("")
     val status: StateFlow<String> = statusState
@@ -25,7 +25,7 @@ class DataCollectionSettings(context: Context) : CollectionPreferences {
     suspend fun choose(enabled: Boolean): Boolean = withContext(Dispatchers.IO) {
         synchronized(lock) {
             val ok = prefs.edit().putBoolean("enabled", enabled).putInt("noticeVersion", 2).commit()
-            if (ok) state.value = CollectionChoice(enabled, true)
+            if (ok) state.value = CollectionChoice(enabled)
             else statusState.value = "Не вдалося зберегти вибір."
             ok
         }
@@ -49,8 +49,8 @@ class DataCollectionSettings(context: Context) : CollectionPreferences {
         statusState.value = when (status) {
             "saved" -> "Останнє звернення збережено на сервері."
             "disabled" -> "На сервері збір даних поки не налаштований."
-            "revoked" -> "Цей ключ видалено. Повторіть видалення для оновлення ключа."
-            "consent_required" -> "Потрібно ознайомитися з оновленими умовами збору даних."
+            "revoked" -> "Серверне збереження для цього встановлення вимкнено. Зверніться до адміністратора проєкту."
+            "consent_required" -> "Сервер потребує новішої версії налаштувань збору даних."
             else -> "Сервер не підтвердив збереження звернення."
         }
     }

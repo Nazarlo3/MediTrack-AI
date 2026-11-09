@@ -28,8 +28,8 @@ class CollectionSettingsTest {
     @Test fun explicitChoicePersistsAndCapabilityIsStableUntilDeletion() = runBlocking {
         val settings = DataCollectionSettings(context)
         assertTrue(settings.choice.value.enabled)
-        assertFalse(settings.choice.value.acknowledged)
-        assertNull(settings.tokenForCollection())
+        assertTrue(settings.choice.value.mayCollect)
+        assertNotNull(settings.tokenForCollection())
         assertTrue(settings.choose(true))
         val token = settings.tokenForCollection()
         assertTrue(token!!.matches(Regex("[a-f0-9]{64}")))

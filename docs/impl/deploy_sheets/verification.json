@@ -1,0 +1,34 @@
+{
+  "render": {
+    "deployId": "dep-dbp1rtff3r2c73cvfkmg",
+    "status": "live",
+    "commit": "d4b4bf220103c2e7a7c29034717f3f7e4e11dd71"
+  },
+  "cloud": {
+    "real_render": true,
+    "real_groq": true,
+    "real_google_sheets": true,
+    "synthetic_only": true,
+    "attempts": [
+      {
+        "http_status": 200,
+        "seconds": 25.751
+      }
+    ],
+    "saved_and_read": true,
+    "owner_delete": true,
+    "test_record_removed": true
+  },
+  "phone": {
+    "installed": true,
+    "versionName": "0.5-debug",
+    "versionCode": "5",
+    "userPreferencesUnchangedBeforeLaunch": true,
+    "changedCount": 0,
+    "launchSucceeded": true,
+    "backend": "https://meditrack-ai-xbk5.onrender.com/",
+    "requiresLaptopServer": false
+  },
+  "ui": "No launch dialog or delete button; default-on setting with expandable details; previous disabled preference preserved",
+  "explicit_consent_claimed": false
+}
