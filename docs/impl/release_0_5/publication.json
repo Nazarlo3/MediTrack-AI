@@ -1,0 +1,21 @@
+{
+  "published": true,
+  "tag": "v0.5",
+  "sourceCommit": "3687df0e83a312e01f2f43184b766d30266105f8",
+  "url": "https://github.com/Nazarlo3/MediTrack-AI/releases/tag/v0.5",
+  "publicDownloadVerified": true,
+  "assets": [
+    {
+      "name": "MediTrackAI-0.5-release.apk",
+      "bytes": 2757349,
+      "url": "https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.5/MediTrackAI-0.5-release.apk",
+      "digest": "sha256:96d70412544f0c279b128b717e219ef5cd03a7c8d5993c0365403ed599f281ac"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 95,
+      "url": "https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.5/SHA256SUMS.txt",
+      "digest": "sha256:900ef05918e0f3d664b4e8b5f3f9a885d83ad6e41a13733a98e44c2536db98b1"
+    }
+  ]
+}

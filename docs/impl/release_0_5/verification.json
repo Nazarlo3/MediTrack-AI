@@ -1,0 +1,26 @@
+{
+  "phone": {
+    "ui_passed": true,
+    "on_saved": true,
+    "off_not_saved": true,
+    "test_rows_deleted": true,
+    "user_preferences_unchanged": true
+  },
+  "release": {
+    "sourceCommit": "3687df0e83a312e01f2f43184b766d30266105f8",
+    "sha256": "96d70412544f0c279b128b717e219ef5cd03a7c8d5993c0365403ed599f281ac",
+    "bytes": 2757349,
+    "version": "0.5",
+    "versionCode": 5,
+    "debuggable": false,
+    "signatureMatches04": true,
+    "zipalign16k": true
+  },
+  "publication_verified": true,
+  "report_pages": 6,
+  "report_visual_review": "all six pages reviewed",
+  "report_sha256": "9076150ba06c61b8b857dab6854177fbda51e861978295468c38e9c1c0b6a424",
+  "release_installed_on_phone": false,
+  "reason": "Existing debug signature differs; no uninstall or data clear",
+  "demo_row_left_for_user": true
+}

@@ -1,0 +1,10 @@
+{
+  "sourceCommit": "3687df0e83a312e01f2f43184b766d30266105f8",
+  "sha256": "96d70412544f0c279b128b717e219ef5cd03a7c8d5993c0365403ed599f281ac",
+  "bytes": 2757349,
+  "version": "0.5",
+  "versionCode": 5,
+  "debuggable": false,
+  "signatureMatches04": true,
+  "zipalign16k": true
+}

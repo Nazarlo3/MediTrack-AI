@@ -1,6 +1,6 @@
 # MediTrack AI 0.5 — Smart Symptom Analysis MVP
 
-Статус 0.5: backend із Google Sheets розгорнуто на Render, debug встановлено на телефон і перевірено запуск. Наскрізний синтетичний Render → Groq → Google → видалення підтверджено. Актуальний опублікований GitHub Release — 0.4; окремий Release 0.5 ще не створювався. [Опис 0.5](docs/releases/v0.5.md).
+Статус 0.5: backend із Google Sheets розгорнуто на Render, debug встановлено на телефон і перевірено запуск. Наскрізний синтетичний Render → Groq → Google → видалення підтверджено. Опубліковано підписаний GitHub Release 0.5; APK та SHA256SUMS перевірені після завантаження. [Опис 0.5](docs/releases/v0.5.md) · [Завантажити release APK 0.5](https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.5/MediTrackAI-0.5-release.apk).
 
 Google Sheets: нові звернення та відповіді зберігаються у приватній Google-таблиці, статистика оновлюється автоматично. Збір початково ввімкнений; перемикач і розгортані подробиці — лише в налаштуваннях. Окремого вікна чи кнопки видалення серверних даних в UI немає. Попереднє вимкнення зберігається. Автоматичного навчання моделі немає. [Налаштування та межі](docs/data-collection.md).
 
