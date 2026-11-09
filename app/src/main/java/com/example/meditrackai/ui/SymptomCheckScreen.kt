@@ -27,12 +27,14 @@ import com.example.meditrackai.ui.theme.*
 fun SymptomCheckScreen(
     viewModel: SymptomViewModel,
     themeMode: com.example.meditrackai.data.ThemeMode = com.example.meditrackai.data.ThemeMode.SYSTEM,
-    onThemeChange: (com.example.meditrackai.data.ThemeMode) -> Unit = {}
+    onThemeChange: (com.example.meditrackai.data.ThemeMode) -> Unit = {},
+    collectionSettings: com.example.meditrackai.data.DataCollectionSettings? = null
 ) {
+    if (collectionSettings != null) CollectionNotice(collectionSettings)
     var showSettings by rememberSaveable { mutableStateOf(false) }
     if (showSettings) {
         AlertDialog(onDismissRequest = { showSettings = false }, title = { Text("Налаштування") },
-            text = { Column {
+            text = { Column(Modifier.verticalScroll(rememberScrollState())) {
                 Text("Тема застосунку", style = MaterialTheme.typography.titleSmall)
                 com.example.meditrackai.data.ThemeMode.entries.forEach { mode ->
                     Row(Modifier.fillMaxWidth().clickable { onThemeChange(mode) }, verticalAlignment = Alignment.CenterVertically) {
@@ -40,6 +42,7 @@ fun SymptomCheckScreen(
                         Text(mode.label)
                     }
                 }
+                if (collectionSettings != null) DataCollectionSettingsSection(collectionSettings)
             } }, confirmButton = { TextButton(onClick = { showSettings = false }) { Text("Готово") } })
     }
     val context = LocalContext.current
@@ -224,6 +227,27 @@ fun SymptomCheckScreen(
                         question = state.result.followUpQuestion,
                         enabled = canClarify, text = clarificationDraft,
                         onTextChange = { clarificationDraft = it },
+                        onSend = viewModel::clarifySymptom,
+                        onNewCheck = { clarificationDraft = ""; viewModel.reset() }
+                    )
+                }
+
+                is SymptomUiState.NoResult -> {
+                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text("Потрібно більше інформації", style = MaterialTheme.typography.titleMedium)
+                            Spacer(Modifier.height(8.dp))
+                            Text(state.result.explanation)
+                            Spacer(Modifier.height(8.dp))
+                            Text("Цю відповідь не додано до історії завершених перевірок.",
+                                style = MaterialTheme.typography.bodySmall)
+                            Text(state.result.disclaimer, style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                    ClarificationSection(
+                        question = state.result.followUpQuestion, enabled = canClarify,
+                        text = clarificationDraft, onTextChange = { clarificationDraft = it },
                         onSend = viewModel::clarifySymptom,
                         onNewCheck = { clarificationDraft = ""; viewModel.reset() }
                     )

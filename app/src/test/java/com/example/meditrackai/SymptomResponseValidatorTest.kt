@@ -3,6 +3,7 @@ package com.example.meditrackai
 import com.example.meditrackai.network.SymptomResponse
 import com.example.meditrackai.validation.SymptomResponseValidator
 import com.google.gson.Gson
+import com.example.meditrackai.data.symptoms.toDomain
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -33,6 +34,16 @@ class SymptomResponseValidatorTest {
     @Test fun rejectsUnknownCategoryAndUrgency() {
         assertFalse(SymptomResponseValidator.isComplete(result.copy(category = "невідома")))
         assertFalse(SymptomResponseValidator.isComplete(result.copy(urgency = "невідома")))
+    }
+
+    @Test fun noResultNeedsQuestionAndOldResponsesRemainUsable() {
+        assertFalse(SymptomResponseValidator.isComplete(result.copy(hasUsableResult = false)))
+        val unavailable = result.copy(hasUsableResult = false, followUpQuestion = "Що саме турбує?")
+        assertTrue(SymptomResponseValidator.isComplete(unavailable))
+        assertEquals(false, unavailable.toDomain().hasUsableResult)
+        val legacy = Gson().fromJson(Gson().toJson(result), SymptomResponse::class.java)
+        assertNull(legacy.toDomain().hasUsableResult)
+        assertTrue(legacy.toDomain().hasUsableResult != false)
     }
 
     @Test fun rejectsEachMissingFieldAfterGsonDeserialization() {

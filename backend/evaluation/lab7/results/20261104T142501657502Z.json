@@ -1,0 +1,83 @@
+{
+  "started_utc": "2026-11-04T14:25:01.657502+00:00",
+  "base_url": "http://127.0.0.1:18765",
+  "scope": "explicit single-case recheck",
+  "git_base": "90a13ae174ca7558014241bde6f402a467858754",
+  "source_state": "Base commit plus working tree identified by source hashes; not a final commit",
+  "source_sha256": {
+    "backend/ai_service.py": "102c8816e374717b86e83fdcef44902e57fef3b235e62471a3707bc2a96db148",
+    "backend/analysis_service.py": "351c8e3053a7e3c560af91bf69bbbce7bd962568256b146b23fbad3bf5848563",
+    "backend/config.py": "837cc4c2386145f7dad4577940190a68e5c466d8171b745930c46c20cf801048",
+    "backend/dependencies.py": "0dc0b05dc56b453d39f315c0c8ed9d1aa36301eea57aed68b043aee2ff1249b5",
+    "backend/domain.py": "7fa38418429b6ecfd98a611d28c4e7a11d9323e7e18033fb7671a0155c0603aa",
+    "backend/fake_provider.py": "0b13dd54ada91fb4040bbfb0b2fe86a437a80c43c18d355cceeea7fbfc555b4b",
+    "backend/main.py": "405ebe73becc152d8869eb990533c09cbb81b131394b86ddccd60e4fc9a01d9b",
+    "backend/models.py": "71f4d31da5cb17b6242e9aab01965e03e479eabbe544d0ef1b02f9f62a1ff0f5",
+    "backend/request_context.py": "ec13c7500a5eb8d16a8dd0dc7f5e43e3a7bffcaa20c30afa78a56e985d194897"
+  },
+  "dataset_sha256": "b6ba815801e1d699b8066ed0521bc4a3572e8758971f0e086ed109a31b42c99f",
+  "prompt_sha256": "a617f1dc13e529fb3a463d869f4190212d974c59b5edad0ff7475b89d1ff8d45",
+  "model_configured": "qwen/qwen3.8-27b",
+  "model_revision": "Provider does not expose a pinned model revision through this API",
+  "temperature": 0.1,
+  "max_tokens": 400,
+  "timeout_seconds": 15.0,
+  "packages": {
+    "fastapi": "0.141.1",
+    "starlette": "1.7.0",
+    "pydantic": "2.13.5",
+    "requests": "2.34.2",
+    "uvicorn": "0.54.0"
+  },
+  "timing": "Complete local HTTP request including real backend/Groq, excluding Android UI and Render",
+  "rows": [
+    {
+      "id": "b1_minimum",
+      "group": "boundary",
+      "regression": false,
+      "request": {
+        "description": "Був свербіж сухої шкіри на передпліччі, зараз не турбує. Травми й алергії не було.",
+        "duration_days": 1,
+        "intensity": 0
+      },
+      "expected": {
+        "category": "шкірне",
+        "explanation_contains": [
+          "1 дн.",
+          "0/10"
+        ]
+      },
+      "attempt": 1,
+      "http_status": 200,
+      "response": {
+        "category": "шкірне",
+        "explanation": "Описано свербіж сухої шкіри на передпліччі, що тривав 1 дн. та мав інтенсивність 0/10. Відсутність травм чи алергій вказує на локальний шкірний дискомфорт, який зараз не турбує.",
+        "urgency": "звичайне",
+        "disclaimer": "Це не медичний діагноз. У разі проблем зі здоров'ям зверніться до лікаря.",
+        "follow_up_question": null,
+        "context_used": false,
+        "details_used": true,
+        "has_usable_result": true
+      },
+      "request_id": "cdaa02da3d2e48e0853fb79f0dd75c37",
+      "checks": {
+        "category": true,
+        "usable": true,
+        "disclaimer": true,
+        "details": true
+      },
+      "passed": true,
+      "elapsed_seconds": 0.619
+    }
+  ],
+  "summary": {
+    "category_correct": 1,
+    "category_denominator": 1,
+    "valid_cases_all_criteria": 1,
+    "regression_passed": 0,
+    "invalid_rejected": 0,
+    "automatic_retries": 0,
+    "clinical_accuracy_evaluated": false
+  },
+  "finished_utc": "2026-11-04T14:25:02.389328+00:00"
+}

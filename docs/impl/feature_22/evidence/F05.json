@@ -1,0 +1,8 @@
+{
+  "id": "F05",
+  "passed": true,
+  "method": "Real UI plus repeated ViewModel launch while request gated",
+  "detail": "One network request and one history entry",
+  "real_groq_calls": 1,
+  "request_id": "949d0477fc2d4cbab7f802d3bec8a4bf"
+}

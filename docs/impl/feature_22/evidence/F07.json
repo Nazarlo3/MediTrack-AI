@@ -1,0 +1,9 @@
+{
+  "id": "F07",
+  "passed": true,
+  "method": "Actual denied notification permission supplied before the test; operator restores it afterwards",
+  "detail": "Permission actions visible; AI tab accessible; no new permission granted by test",
+  "real_groq_calls": 0,
+  "date": "2026-11-05",
+  "testApkSha256": "8083045beccf2bbe5c6dda579dcad11357cfa937422ec54501c173aaabcbf0b9"
+}

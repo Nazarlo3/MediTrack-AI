@@ -1,6 +1,8 @@
 # Архітектура MediTrack AI
 
-Стан: 18.10.2026, код підготовленої версії 0.3. Це карта реалізації для наступної сесії, а не підтвердження стану хмарного сервера чи APK. Початковий огляд був статичним; нижче додано реалізацію ЛР5. Фактичні нові перевірки — у testing.md.
+Підготовка розгортання 0.5/code 5 (09.11.2026): debug працює через HTTPS Render, суфікс -debug. Опис нижче зі станом 0.4/ЛР7 є історичним зрізом, доповненим feature_23/24. Фактичний статус публікації — docs/impl/deploy_sheets/changelog.md.
+
+Стан: 04.11.2026, 0.4 та локальна інтеграція ЛР7 (`0.4-lab7` debug). Опублікований release 0.4 не містить змін ЛР7. Карта коду; фактичні перевірки й межі — [feature_22/verification.md](impl/feature_22/verification.md).
 
 ## Орієнтири
 
@@ -17,24 +19,51 @@ MediTrack AI інформаційно категоризує опис самоп
 | [experiment/](../experiment/) | Збережені плани експерименту з контекстом; не реалізовані можливості |
 | docs/various files/, .artifacts/, signing/ | Локальні ігноровані матеріали, допоміжні артефакти та підпис; не використовувати їхній вміст як публічну документацію |
 
+## Схема поточного потоку
+
+```mermaid
+flowchart TD
+  UI[Compose екран] --> VM[ViewModel та Controller]
+  VM --> UC[AnalyzeSymptomUseCase]
+  UC --> R[SymptomRepository]
+  R --> HTTP[Retrofit та OkHttp]
+  HTTP --> API[FastAPI та Pydantic]
+  API --> S[AnalysisService]
+  S --> P[AIProvider та GroqProvider]
+  P --> AI[Groq модель]
+  AI --> P
+  P --> S
+  S --> API
+  API --> HTTP
+  HTTP --> R
+  R --> UC
+  UC --> VM
+  VM --> UI
+  VM --> H[Історія через repository]
+  H --> L[LocalDataStore та SharedPreferences]
+  VM --> M[Ліки та AlarmManager]
+```
+
+Історія записується лише для придатного результату. Ключ Groq зберігається на backend. Системний промпт/перевірка JSON — у GroqProvider, формат HTTP — у models.py.
+
 ## Android та життєвий цикл
 
 - [MainActivity](../app/src/main/java/com/example/meditrackai/MainActivity.kt) — єдина Activity, Compose/Material 3, Scaffold, Snackbar і збереження теми через [ThemeSettings](../app/src/main/java/com/example/meditrackai/data/ThemeSettings.kt). Три теми: SYSTEM/LIGHT/DARK.
 - [SymptomCheckScreen](../app/src/main/java/com/example/meditrackai/ui/SymptomCheckScreen.kt) перемикає дві вкладки локальним selectedTab; початкова — «Мої ліки». Navigation Compose/NavHost немає. Історія розташована у вкладці «Аналіз AI», деталі/налаштування — діалоги.
 - [MedicationSection](../app/src/main/java/com/example/meditrackai/ui/MedicationSection.kt) містить форму додавання/редагування, список, статуси окремих прийомів і доступ до дозволів. Прийнятий час підсвічується; вся картка — коли прийняті всі часи за сьогодні.
 - [HistorySection](../app/src/main/java/com/example/meditrackai/ui/HistorySection.kt) відрізняє завантаження, порожній стан і помилку читання; відкриває історичний результат за ID; видаляє один/усі записи з підтвердженням.
-- [SymptomViewModel](../app/src/main/java/com/example/meditrackai/ui/SymptomViewModel.kt) отримує залежності через конструктор і делегує аналіз/історію чистому Kotlin [SymptomAnalysisController](../app/src/main/java/com/example/meditrackai/ui/SymptomAnalysisController.kt) у viewModelScope. [SymptomUiState](../app/src/main/java/com/example/meditrackai/ui/SymptomUiState.kt): Idle/Loading/Success/Error, категорії помилок → власні UI-повідомлення. Помилки локального запису — окремий storageError. Ліки ще напряму використовують LocalDataStore, PhotoStorage та планувальник у ViewModel.
+- [SymptomViewModel](../app/src/main/java/com/example/meditrackai/ui/SymptomViewModel.kt) отримує залежності через конструктор і делегує аналіз/історію чистому Kotlin [SymptomAnalysisController](../app/src/main/java/com/example/meditrackai/ui/SymptomAnalysisController.kt) у viewModelScope. [SymptomUiState](../app/src/main/java/com/example/meditrackai/ui/SymptomUiState.kt): Idle/Loading/Success/NoResult/Error, категорії помилок → власні UI-повідомлення. Помилки локального запису — окремий storageError. Ліки ще напряму використовують LocalDataStore, PhotoStorage та планувальник у ViewModel.
 - UI збирає Flow через collectAsState; вкладка й форми використовують rememberSaveable/SaveableStateHolder. ON_RESUME перечитує ліки після фонової дії сповіщення та оновлює графік/дозволи. ViewModel переживає зміну конфігурації, але lastRequest і AI-розмова не зберігаються після завершення процесу. DebugMenu відкривається п’ятьма швидкими натисканнями заголовка лише за FLAG_DEBUGGABLE.
 
 ## Android: сценарій ЛР5, варіант А
 
 Потік аналізу: Compose → SymptomViewModel → SymptomAnalysisController → [AnalyzeSymptomUseCase](../app/src/main/java/com/example/meditrackai/domain/symptoms/AnalyzeSymptomUseCase.kt) → [SymptomRepository](../app/src/main/java/com/example/meditrackai/domain/symptoms/SymptomRepository.kt) → [DefaultSymptomRepository](../app/src/main/java/com/example/meditrackai/data/symptoms/DefaultSymptomRepository.kt) → MediTrackApi/Retrofit. Історія проходить через той самий repository → SharedPreferencesSymptomHistorySource → LocalDataStore.
 
-- [domain/symptoms/SymptomModels.kt](../app/src/main/java/com/example/meditrackai/domain/symptoms/SymptomModels.kt) не імпортує Android, Compose, Retrofit чи Gson. Use case перевіряє обрізаний опис (3–500), порядок/ліміт контексту, готує наступний контекст та історичний запис; час ін’єктується для тестів.
-- [SymptomMapper](../app/src/main/java/com/example/meditrackai/data/symptoms/SymptomMapper.kt) відділяє domain від API/storage DTO. Старі DTO лишилися у network/SymptomModels.kt: формат Gson/ключі сховища не змінено. Repository перевіряє повноту відповіді та context_used, класифікує HTTP/IO/storage помилки.
+- [domain/symptoms/SymptomModels.kt](../app/src/main/java/com/example/meditrackai/domain/symptoms/SymptomModels.kt) не імпортує Android, Compose, Retrofit чи Gson. Use case перевіряє обрізаний опис (3–500), необов’язкові durationDays 1–30/intensity 0–10, порядок/ліміт контексту, готує наступний контекст та історичний запис; час ін’єктується для тестів.
+- [SymptomMapper](../app/src/main/java/com/example/meditrackai/data/symptoms/SymptomMapper.kt) відділяє domain від API/storage DTO. Старі DTO лишилися у network/SymptomModels.kt: формат Gson/ключі сховища не змінено. Repository перевіряє повноту відповіді та context_used/details_used, класифікує HTTP/IO/storage помилки.
 - [SymptomDependencies](../app/src/main/java/com/example/meditrackai/di/SymptomDependencies.kt) — ручна DI/фабрика ViewModel; один LocalDataStore спільний для історії та ліків. FakeSymptomRepository існує лише в src/test; користувацький екран завжди використовує справжній repository.
 - Успіх AI показується до дискового збереження. Помилка запису історії не перетворює успішний аналіз на мережеву помилку. Controller має незалежні стани завантаження історії, недоступності й вибраного запису.
-- «Скасувати аналіз» діє лише у Loading: скасовує Job, початковий аналіз повертається в Idle, уточнення — до попереднього Success. Запізнілі результат/помилка не змінюють UI та не додають історію; CancellationException передається далі. Чернетки залишаються в rememberSaveable; чернетка уточнення очищується лише для нового успішного analysisId.
+- «Скасувати аналіз» діє лише у Loading: скасовує Job, початковий аналіз повертається в Idle, уточнення — до попереднього Success або NoResult. Запізнілі результат/помилка не змінюють UI та не додають історію; CancellationException передається далі. Чернетки залишаються в rememberSaveable; чернетка уточнення очищується лише для нового успішного analysisId.
 - Скасування на телефоні не гарантує припинення обчислення вже прийнятого сервером запиту. Після завершення Loading почате збереження кнопкою не скасовується. Аналіз, контекст і Job не відновлюються після завершення процесу.
 
 ## Дані
@@ -54,14 +83,14 @@ MediTrack AI інформаційно категоризує опис самоп
 
 Джерела контракту: [ApiClient.kt](../app/src/main/java/com/example/meditrackai/network/ApiClient.kt), [SymptomModels.kt](../app/src/main/java/com/example/meditrackai/network/SymptomModels.kt), [main.py](../backend/main.py), [models.py](../backend/models.py).
 
-- Retrofit/Gson + OkHttp; BASE_URL зашитий у ApiClient на Render HTTPS, connect/read/write timeout — по 60 с. Зміна адреси у налаштуваннях не реалізована.
+- Retrofit/Gson + OkHttp; адреса з BuildConfig.BACKEND_URL; release завжди Render HTTPS, debug допускає Gradle property meditrack.backendUrl, connect/read/write timeout — по 60 с. Зміна адреси у налаштуваннях не реалізована.
 - GET /health → status=ok. Перевіряє доступність обробника, а не Groq/ключа.
-- POST /analyze-symptom: description довжиною 3–500; context необов’язковий, до 6 попередніх повідомлень (повні пари user/assistant), непорожній content до 1500 символів. Інші ролі й порядок відхиляються.
-- Відповідь: category, explanation, urgency, disclaimer, follow_up_question (рядок до 300 або null), context_used. Android мапить останні два поля через SerializedName.
-- Уточнень до трьох у поточній ViewModel-сесії. context_used=true потрібний для прийняття уточнення від сервера; це підтвердження передачі контексту, не якості його використання моделлю. Retry відтворює той самий запит. Кожен успіх додає окремий запис із накопиченими користувацькими описами.
+- POST /analyze-symptom: description довжиною 3–500; context необов’язковий, до 6 попередніх повідомлень (повні пари user/assistant), непорожній content до 1500 символів. Додаткові duration_days 1–30 та intensity 0–10 — strict integer або null. Інші ролі й порядок відхиляються.
+- Відповідь: category, explanation, urgency, disclaimer, follow_up_question (рядок до 300 або null), context_used, details_used, has_usable_result. Snake_case поля мапляться через SerializedName. Явне false означає успішну обробку без придатної категоризації: NoResult показує пояснення/питання, дозволяє уточнення, не створює запис історії. Відсутнє поле у старій відповіді зберігає попередню поведінку; категорія «інше» сама по собі не є NoResult.
+- Уточнень до трьох у поточній ViewModel-сесії. context_used=true потрібний для прийняття уточнення від сервера; це підтвердження передачі контексту, не якості його використання моделлю. Retry відтворює той самий запит. Кожен придатний успіх додає окремий запис із накопиченими користувацькими описами.
 - Pydantic перевіряє довжину до strip(); обробник додатково відхиляє лише повністю пробільний опис (400). Валідація Pydantic — 422, domain errors провайдера — 503, неочікувана помилка — загальний JSON 500. Android показує власні повідомлення; HTTP/мережеві помилки й неповні результати не стають записами «готово».
 
-[ai_service.py](../backend/ai_service.py): requests.post до Groq Chat Completions, модель qwen/qwen3.8-27b, json_object, temperature=0.1, max_tokens=400, timeout=15 с. Порядок messages: системні правила → context → новий опис. Є 16 категорій і три urgency: звичайне/увага/терміново.
+[ai_service.py](../backend/ai_service.py): requests.post до Groq Chat Completions, модель qwen/qwen3.8-27b, json_object, temperature=0.1, max_tokens=400, timeout=15 с. Порядок messages: системні правила → context → новий опис із наданими duration_days/intensity. Є 16 категорій і три urgency: звичайне/увага/терміново.
 
 _validate_ai_result нормалізує регістр, невідому категорію замінює на «інше», невідому urgency відхиляє; перевіряє поля та необов’язкове питання. Android повторно перевіряє результат через [SymptomResponseValidator](../app/src/main/java/com/example/meditrackai/validation/SymptomResponseValidator.kt). При недоступності Groq немає резервної моделі чи офлайн-аналізу: контрольована помилка й ручний повтор. GROQ_API_KEY читається єдиним config.py із середовища / backend/.env; ключ не передається в APK. Backend не має власної БД, облікових записів, автентифікації чи лімітування запитів у перевіреному коді.
 
@@ -74,7 +103,7 @@ _validate_ai_result нормалізує регістр, невідому кат
 | [domain.py](../backend/domain.py) | AnalysisInput, ConversationMessage, AnalysisResult, AIProvider, domain errors; без FastAPI/Pydantic/requests/.env |
 | [analysis_service.py](../backend/analysis_service.py) | Перевірка опису й контексту, нормалізація, виклик ін’єктованого провайдера, context_used |
 | [models.py](../backend/models.py) | Pydantic request/response, явні to_domain/from_domain |
-| [ai_service.py](../backend/ai_service.py) | GroqProvider: HTTP до Groq, незмінений промпт, перевірка provider JSON → AnalysisResult |
+| [ai_service.py](../backend/ai_service.py) | GroqProvider: HTTP до Groq, системний промпт,  перевірка provider JSON → AnalysisResult |
 | [fake_provider.py](../backend/fake_provider.py) | Синтетичний успіх/контрольована помилка за тим самим інтерфейсом, без мережі |
 | [config.py](../backend/config.py) | Єдиний читач середовища/backend/.env; кешовані Settings, api_key приховано з repr |
 | [dependencies.py](../backend/dependencies.py) | Composition root через Depends; get_provider можна підмінити dependency_overrides |
@@ -98,7 +127,7 @@ Force stop, системні обмеження та відсутні дозво
 ## Конфігурація та запуск
 
 Підтверджено конфігурацією, а не новим запуском:
-- [app/build.gradle.kts](../app/build.gradle.kts): compile/target SDK 37, minSdk 29, versionName=0.3 / versionCode=3, Java target 11; release — R8/resource shrinking, власний підпис із локального keystore.properties, без нього — без підпису.
+- [app/build.gradle.kts](../app/build.gradle.kts): compile/target SDK 37, minSdk 29, versionName=0.4 / versionCode=4, debug suffix=-lab7, Java target 11; release — R8/resource shrinking, власний підпис із локального keystore.properties, без нього — без підпису.
 - [libs.versions.toml](../gradle/libs.versions.toml) / [wrapper](../gradle/wrapper/gradle-wrapper.properties): AGP 9.4.1, Gradle 9.6.0, Compose plugin 2.2.10, Compose BOM 2026.02.01, lifecycle-runtime-ktx 2.11.0, activity-compose 1.8.0; ViewModel Compose 2.8.4, Retrofit 2.11.0, OkHttp 4.12.0, coroutines-android 1.8.1 задані в app/build.gradle.kts. Daemon [потребує JVM 25](../gradle/gradle-daemon-jvm.properties); Java target 11 не означає JDK 11 для Gradle.
 - [requirements.txt](../backend/requirements.txt): fastapi, uvicorn[standard], pydantic, requests, python-dotenv без фіксованих версій. Код використовує Pydantic v2 та синтаксис Python 3.10+; конкретна версія Python не закріплена.
 
@@ -115,11 +144,11 @@ python -m pip install -r backend/requirements.txt
 Set-Location backend
 python -m uvicorn main:app --host 0.0.0.0 --port 8000
 ```
-Локальний сервер не перемикає зашиту адресу Android. З кореня тести backend:
+Локальний сервер сам не перемикає Android: debug збирається з -Pmeditrack.backendUrl=http://127.0.0.1:18765/ і adb reverse або з адресою ПК у спільній мережі. Повні кроки — README. З кореня тести backend:
 ```powershell
 python -m unittest discover -s backend/tests -v
 ```
-Для HTTP-тестів спочатку встановити backend/requirements-dev.txt (HTTPX). Тести використовують unittest і mock; pytest не оголошений у залежностях, попри типовий приклад у docs/AGENTS.md.
+Для HTTP-тестів спочатку встановити backend/requirements-dev.txt (HTTPX та httpx2 для поточного Starlette). Тести використовують unittest і mock; pytest не оголошений у залежностях, попри типовий приклад у docs/AGENTS.md.
 
 ## Перевірки та межі
 
@@ -131,4 +160,15 @@ python -m unittest discover -s backend/tests -v
 
 ### Перевірка Android на телефоні після ЛР5
 
-[Lab5PhoneScenarioTest](../app/src/androidTest/java/com/example/meditrackai/Lab5PhoneScenarioTest.kt) — opt-in сценарії зі справжніми UI/ViewModel/use case/repository/Retrofit, ізольованими SharedPreferences і явно ін’єктованим локальним API. На фізичному Android 15 перевірено аналіз/уточнення/історію через FastAPI → Groq, контрольовані IOException/retry та очікування/cancel. Звичайна MainActivity продовжує використовувати SymptomDependencies із Render; endpoint production не підміняли. Результати й межі — у testing.md, [feature_14](impl/feature_14/changelog.md).
+[Lab5PhoneScenarioTest](../app/src/androidTest/java/com/example/meditrackai/Lab5PhoneScenarioTest.kt) — opt-in сценарії зі справжніми UI/ViewModel/use case/repository/Retrofit, ізольованими SharedPreferences і явно ін’єктованим локальним API. На фізичному Android 15 перевірено аналіз/уточнення/історію через FastAPI → Groq, контрольовані IOException/retry та очікування/cancel. Це історична перевірка ЛР5. У ЛР7 звичайна MainActivity бере адресу із BuildConfig; production URL залишено Render, локальний debug задається під час збірки. Результати й межі — у testing.md, [feature_14](impl/feature_14/changelog.md).
+
+
+## Добровільний збір звернень — feature_23
+
+05.11.2026: DataCollectionSettings (приватні prefs, StateFlow) спільний для MainActivity/екрана та DefaultSymptomRepository через CollectionPreferences. До явного вибору metadata/token не передаються. Для погодженого збору використовується CollectionApi; основний legacy MediTrackApi сумісний. Потік після AI: HTTP route → CollectionService → CollectionRepository/SQLite. БД відсутня, доки оператор не задасть COLLECTION_DB_PATH; collection admin secret окремий від Groq. SQL/збір не є залежністю доменного AnalysisService. Фонове очищення у FastAPI lifespan, додаткове очищення при операціях. Власні приватні ключі виключено з backup/transfer.
+
+Це окрема наступна зміна після перевіреного APK ЛР7; його історичні хеші не описують нову збірку. Хмарна активація/постійне сховище ще не виконані. [План](impl/feature_23/plan.md), [експлуатація і межі](data-collection.md).
+
+## Google Sheets — 09.11.2026
+
+Feature_24: фабрика get_collection_repository обирає SheetsCollectionRepository + SheetsTransport за GOOGLE_SHEETS_ID, інакше SQLite/disabled. Згода Google версії 2; очищення використовує ту саму фабрику. Кеш repository/токена, блокування процесу, атомарні batchUpdate для запису/статистики та видалення/відкликання. Тільки один процес/інстанс; це не транзакційне сховище для кількох серверів. Подробиці й конфігурація — data-collection.md.

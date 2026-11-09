@@ -137,6 +137,38 @@ class SymptomAnalysisControllerTest {
         assertNull(repository.requests.last().intensity)
     }
 
+    @Test fun unavailableResultCanBeClarifiedWithoutSavingIncompleteHistory() = scenario { repository, controller, _ ->
+        repository.result = repository.result.copy(hasUsableResult = false)
+        controller.checkSymptom("Монітор не працює"); yield()
+        assertTrue(controller.uiState.value is SymptomUiState.NoResult)
+        assertEquals(0, repository.saves)
+        assertTrue(controller.canClarify.value)
+        val previous = controller.uiState.value
+        val gate = CompletableDeferred<SymptomAnalysis>()
+        repository.respond = { gate.await() }
+        controller.clarifySymptom("Болить голова"); yield()
+        controller.cancelAnalysis()
+        assertEquals(previous, controller.uiState.value)
+        repository.respond = { repository.result.copy(hasUsableResult = true, contextUsed = true) }
+        controller.retryLastCheck(); yield()
+        assertTrue(controller.uiState.value is SymptomUiState.Success)
+        assertEquals(2, repository.requests.last().context.size)
+        assertEquals(1, repository.saves)
+    }
+
+    @Test fun repeatedLaunchWhileLoadingMakesOneRequestAndOneHistoryEntry() = scenario { repository, controller, _ ->
+        val gate = CompletableDeferred<SymptomAnalysis>()
+        repository.respond = { gate.await() }
+        controller.checkSymptom("Перший опис"); yield()
+        controller.checkSymptom("Другий опис")
+        controller.retryLastCheck()
+        controller.clarifySymptom("Уточнення")
+        assertEquals(1, repository.requests.size)
+        gate.complete(repository.result); yield()
+        assertEquals(1, repository.saves)
+        assertEquals("Перший опис", controller.historyState.value.single().description)
+    }
+
     private fun scenario(block: suspend (FakeSymptomRepository, SymptomAnalysisController, MutableList<String?>) -> Unit) = runBlocking {
         val repository = FakeSymptomRepository()
         val errors = mutableListOf<String?>()

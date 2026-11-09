@@ -30,6 +30,7 @@ class AnalysisResult:
     context_used: bool = False
     disclaimer: str = MEDICAL_DISCLAIMER
     details_used: bool = False
+    has_usable_result: bool = True
 
 
 class AnalysisError(Exception):

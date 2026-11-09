@@ -7,10 +7,16 @@ import java.io.IOException
 
 class DefaultSymptomRepository(
     private val api: MediTrackApi,
-    private val history: SymptomHistorySource
+    private val history: SymptomHistorySource,
+    private val collection: com.example.meditrackai.data.CollectionPreferences? = null,
+    private val collectionApi: com.example.meditrackai.network.CollectionApi? = null
 ) : SymptomRepository {
     override suspend fun analyze(input: SymptomInput): SymptomAnalysis = try {
-        val response = api.analyzeSymptom(input.toRequest())
+        val token = collection?.tokenForCollection()
+        val response = if (token != null && collectionApi != null) {
+            collectionApi.analyze(input.toRequest().copy(collection = com.example.meditrackai.network.CollectionConsent()), token)
+                .also { collection?.report(it.headers()["X-Collection-Status"]) }
+        } else api.analyzeSymptom(input.toRequest())
         if (!response.isSuccessful) throw SymptomFailure(
             if (response.code() == 400 || response.code() == 422) SymptomError.INVALID_INPUT else SymptomError.SERVER
         )

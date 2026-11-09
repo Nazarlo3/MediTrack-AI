@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-09",
+  "backend_tests": 59,
+  "android": {
+    "tests": 67,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "lint": {
+    "Error": 0,
+    "Warning": 45,
+    "Fatal": 0
+  },
+  "live": {
+    "real_google_sheets": true,
+    "ai_provider": "FakeProvider; no real medical input",
+    "test_rows_removed": true,
+    "record_read_stats": true,
+    "deduplicated": true,
+    "scoped_delete": true,
+    "late_write_blocked": true
+  },
+  "scope": "Google REST through curl; FakeProvider; no live Groq/phone/Render deployment",
+  "apk_sha256": "3b48b2c4957f7b5f0cb35871334e04d6ff5d29c6dd76ef416870661a00770ddd",
+  "git_diff_check": true,
+  "selected_secret_pattern_scan": true,
+  "backend_tests_note": "59 full-suite pass before final capacity guard; 9 Sheets tests pass after that change (one newly added)",
+  "final_sheets_tests": 9
+}

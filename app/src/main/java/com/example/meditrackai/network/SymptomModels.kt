@@ -9,7 +9,8 @@ data class SymptomRequest(
     val description: String,
     val context: List<ConversationTurn> = emptyList(),
     @SerializedName("duration_days") val durationDays: Int? = null,
-    val intensity: Int? = null
+    val intensity: Int? = null,
+    val collection: CollectionConsent? = null
 )
 
 @Immutable
@@ -23,7 +24,8 @@ data class SymptomResponse(
     val disclaimer: String = "Це не медичний діагноз. У разі проблем зі здоров'ям зверніться до лікаря.",
     @SerializedName("follow_up_question") val followUpQuestion: String? = null,
     @SerializedName("context_used") val contextUsed: Boolean? = null,
-    @SerializedName("details_used") val detailsUsed: Boolean? = null
+    @SerializedName("details_used") val detailsUsed: Boolean? = null,
+    @SerializedName("has_usable_result") val hasUsableResult: Boolean? = null
 )
 
 @Immutable

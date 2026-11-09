@@ -1,0 +1,7 @@
+{
+  "id": "F04",
+  "passed": true,
+  "method": "Controlled HTTP 503 at API boundary",
+  "detail": "No crash or history; actionable error",
+  "real_groq_calls": 0
+}

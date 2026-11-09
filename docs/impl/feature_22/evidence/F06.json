@@ -1,0 +1,8 @@
+{
+  "id": "F06",
+  "passed": true,
+  "method": "ActivityScenario CREATED then RESUMED during loading; real API after gate",
+  "detail": "State preserved, loading completed; no process death simulated",
+  "real_groq_calls": 1,
+  "request_id": "949d0477fc2d4cbab7f802d3bec8a4bf"
+}

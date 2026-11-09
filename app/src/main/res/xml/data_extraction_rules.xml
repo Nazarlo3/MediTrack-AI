@@ -5,11 +5,15 @@
 -->
 <data-extraction-rules>
     <cloud-backup>
+        <exclude domain="sharedpref" path="meditrack_collection.xml"/>
         <!-- TODO: Use <include> and <exclude> to control what is backed up.
         <include .../>
         <exclude .../>
         -->
     </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="meditrack_collection.xml"/>
+    </device-transfer>
     <!--
     <device-transfer>
         <include .../>

@@ -1,0 +1,160 @@
+INSTRUMENTATION_STATUS: class=com.example.meditrackai.Lab7PhoneScenarioTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=6
+INSTRUMENTATION_STATUS: stream=
+com.example.meditrackai.Lab7PhoneScenarioTest:
+INSTRUMENTATION_STATUS: test=f04ServiceFailure
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.example.meditrackai.Lab7PhoneScenarioTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=6
+INSTRUMENTATION_STATUS: stack=java.lang.IllegalStateException: No compose hierarchies found in the app. Possible reasons include: (1) the Activity that calls setContent did not launch; (2) setContent was not called; (3) setContent was called before the ComposeTestRule ran. If setContent is called by the Activity, make sure the Activity is launched after the ComposeTestRule runs
+	at androidx.compose.ui.test.TestOwnerKt.getAllSemanticsNodes(TestOwner.kt:106)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemanticsNodes$ui_test(SemanticsNodeInteraction.kt:64)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:157)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemanticsNode(SemanticsNodeInteraction.kt:84)
+	at androidx.compose.ui.test.ActionsKt.performScrollTo(Actions.kt:80)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.f04ServiceFailure$lambda$18(Lab7PhoneScenarioTest.kt:175)
+	at com.example.meditrackai.Lab7PhoneScenarioTest$$ExternalSyntheticLambda5.invoke(D8$$SyntheticClass:0)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.scenario(Lab7PhoneScenarioTest.kt:85)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.f04ServiceFailure(Lab7PhoneScenarioTest.kt:171)
+
+INSTRUMENTATION_STATUS: stream=
+Error in f04ServiceFailure(com.example.meditrackai.Lab7PhoneScenarioTest):
+java.lang.IllegalStateException: No compose hierarchies found in the app. Possible reasons include: (1) the Activity that calls setContent did not launch; (2) setContent was not called; (3) setContent was called before the ComposeTestRule ran. If setContent is called by the Activity, make sure the Activity is launched after the ComposeTestRule runs
+	at androidx.compose.ui.test.TestOwnerKt.getAllSemanticsNodes(TestOwner.kt:106)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemanticsNodes$ui_test(SemanticsNodeInteraction.kt:64)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:157)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemanticsNode(SemanticsNodeInteraction.kt:84)
+	at androidx.compose.ui.test.ActionsKt.performScrollTo(Actions.kt:80)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.f04ServiceFailure$lambda$18(Lab7PhoneScenarioTest.kt:175)
+	at com.example.meditrackai.Lab7PhoneScenarioTest$$ExternalSyntheticLambda5.invoke(D8$$SyntheticClass:0)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.scenario(Lab7PhoneScenarioTest.kt:85)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.f04ServiceFailure(Lab7PhoneScenarioTest.kt:171)
+
+INSTRUMENTATION_STATUS: test=f04ServiceFailure
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=com.example.meditrackai.Lab7PhoneScenarioTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=6
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=f03NetworkFailureAndF09RealRetry
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.example.meditrackai.Lab7PhoneScenarioTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=6
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=f03NetworkFailureAndF09RealRetry
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.example.meditrackai.Lab7PhoneScenarioTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=6
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=f08NoResultAndClarification
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.example.meditrackai.Lab7PhoneScenarioTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=6
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=f08NoResultAndClarification
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.example.meditrackai.Lab7PhoneScenarioTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=6
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=f05DuplicateLaunchAndF06BackgroundReturn
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.example.meditrackai.Lab7PhoneScenarioTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=6
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=f05DuplicateLaunchAndF06BackgroundReturn
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.example.meditrackai.Lab7PhoneScenarioTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=6
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=f02InvalidInputNeverCallsApi
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.example.meditrackai.Lab7PhoneScenarioTest
+INSTRUMENTATION_STATUS: current=5
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=6
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=f02InvalidInputNeverCallsApi
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.example.meditrackai.Lab7PhoneScenarioTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=6
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=f01RealAnalysisAndStoredHistory
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.example.meditrackai.Lab7PhoneScenarioTest
+INSTRUMENTATION_STATUS: current=6
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=6
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: Actual: Error(reason=SERVER)
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.success(Lab7PhoneScenarioTest.kt:104)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.f01RealAnalysisAndStoredHistory$lambda$15(Lab7PhoneScenarioTest.kt:125)
+	at com.example.meditrackai.Lab7PhoneScenarioTest$$ExternalSyntheticLambda7.invoke(D8$$SyntheticClass:0)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.scenario(Lab7PhoneScenarioTest.kt:85)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.f01RealAnalysisAndStoredHistory(Lab7PhoneScenarioTest.kt:120)
+
+INSTRUMENTATION_STATUS: stream=
+Error in f01RealAnalysisAndStoredHistory(com.example.meditrackai.Lab7PhoneScenarioTest):
+java.lang.AssertionError: Actual: Error(reason=SERVER)
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.success(Lab7PhoneScenarioTest.kt:104)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.f01RealAnalysisAndStoredHistory$lambda$15(Lab7PhoneScenarioTest.kt:125)
+	at com.example.meditrackai.Lab7PhoneScenarioTest$$ExternalSyntheticLambda7.invoke(D8$$SyntheticClass:0)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.scenario(Lab7PhoneScenarioTest.kt:85)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.f01RealAnalysisAndStoredHistory(Lab7PhoneScenarioTest.kt:120)
+
+INSTRUMENTATION_STATUS: test=f01RealAnalysisAndStoredHistory
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 27,492
+There were 2 failures:
+1) f04ServiceFailure(com.example.meditrackai.Lab7PhoneScenarioTest)
+java.lang.IllegalStateException: No compose hierarchies found in the app. Possible reasons include: (1) the Activity that calls setContent did not launch; (2) setContent was not called; (3) setContent was called before the ComposeTestRule ran. If setContent is called by the Activity, make sure the Activity is launched after the ComposeTestRule runs
+	at androidx.compose.ui.test.TestOwnerKt.getAllSemanticsNodes(TestOwner.kt:106)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemanticsNodes$ui_test(SemanticsNodeInteraction.kt:64)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:157)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemanticsNode(SemanticsNodeInteraction.kt:84)
+	at androidx.compose.ui.test.ActionsKt.performScrollTo(Actions.kt:80)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.f04ServiceFailure$lambda$18(Lab7PhoneScenarioTest.kt:175)
+	at com.example.meditrackai.Lab7PhoneScenarioTest$$ExternalSyntheticLambda5.invoke(D8$$SyntheticClass:0)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.scenario(Lab7PhoneScenarioTest.kt:85)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.f04ServiceFailure(Lab7PhoneScenarioTest.kt:171)
+2) f01RealAnalysisAndStoredHistory(com.example.meditrackai.Lab7PhoneScenarioTest)
+java.lang.AssertionError: Actual: Error(reason=SERVER)
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.success(Lab7PhoneScenarioTest.kt:104)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.f01RealAnalysisAndStoredHistory$lambda$15(Lab7PhoneScenarioTest.kt:125)
+	at com.example.meditrackai.Lab7PhoneScenarioTest$$ExternalSyntheticLambda7.invoke(D8$$SyntheticClass:0)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.scenario(Lab7PhoneScenarioTest.kt:85)
+	at com.example.meditrackai.Lab7PhoneScenarioTest.f01RealAnalysisAndStoredHistory(Lab7PhoneScenarioTest.kt:120)
+
+FAILURES!!!
+Tests run: 6,  Failures: 2
+
+
+INSTRUMENTATION_CODE: -1

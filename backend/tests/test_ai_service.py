@@ -51,6 +51,17 @@ class AIServiceTests(unittest.TestCase):
     def test_unknown_category_uses_existing_fallback(self):
         self.assertEqual("інше", ai_service._validate_ai_result({**self.valid, "category": "невідома"})["category"])
 
+    def test_availability_is_explicit_and_legacy_other_remains_usable(self):
+        self.assertTrue(ai_service._validate_ai_result({**self.valid, "category": "інше"})["has_usable_result"])
+        response = ai_service._validate_ai_result({**self.valid, "has_usable_result": False,
+                                                  "follow_up_question": "Що саме турбує?"})
+        self.assertFalse(response["has_usable_result"])
+        for value in (None, "false", 0, []):
+            with self.assertRaises(ValueError):
+                ai_service._validate_ai_result({**self.valid, "has_usable_result": value})
+        with self.assertRaises(ValueError):
+            ai_service._validate_ai_result({**self.valid, "has_usable_result": False})
+
     def test_unknown_urgency_is_not_downgraded_to_normal(self):
         for urgency in ("не терміново", "maybe", "терміново чи ні", "", None, 1):
             with self.subTest(urgency=urgency):
@@ -154,7 +165,10 @@ class AIServiceTests(unittest.TestCase):
         from models import SymptomRequest
         context = [{"role": "user", "content": "Ударив ногу"}, {"role": "assistant", "content": "Чи болить?"}]
         fake = FakeProvider()
-        result = main.analyze_symptom(SymptomRequest(description="Так, болить", context=context), AnalysisService(fake))
+        from fastapi import Response
+        from collection_service import CollectionService
+        result = main.analyze_symptom(SymptomRequest(description="Так, болить", context=context),
+                                     Response(), AnalysisService(fake), CollectionService(None, 'test'), None)
         self.assertTrue(result.context_used)
         self.assertIsNotNone(result.follow_up_question)
         self.assertEqual("Так, болить", fake.calls[0].description)

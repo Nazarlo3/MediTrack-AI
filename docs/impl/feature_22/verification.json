@@ -1,0 +1,132 @@
+{
+  "date": "2026-11-04",
+  "base_commit": "90a13ae174ca7558014241bde6f402a467858754",
+  "final_commit": null,
+  "apk": {
+    "model": "23030RAC7Y",
+    "android": "15",
+    "versionName": "0.4-lab7",
+    "versionCode": "4",
+    "debugApkSha256": "ba2596b30107f49131526a6b56cf8720d422b447a9e8d50fd5ad21b502c55754",
+    "testApkSha256": "362cc11a038d9a49a7f845b9528df1315da70026fec86397009277f6f65e5354",
+    "installedWithoutClearingData": true,
+    "launch": "Starting: Intent { cmp=com.example.meditrackai/.MainActivity }\r\nStatus: ok\r\nLaunchState: COLD\r\nActivity: com.example.meditrackai/.MainActivity\r\nTotalTime: 2833\r\nWaitTime: 2848\r\nComplete\r\n"
+  },
+  "jvm": {
+    "tests": 64,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "lint": {
+    "Error": 0,
+    "Warning": 43,
+    "Fatal": 0
+  },
+  "backend": {
+    "tests": 42,
+    "errors": 0,
+    "failures": 0,
+    "scope": "Current working tree includes two pre-existing Lab3 tests"
+  },
+  "phone_checks": {
+    "F01": {
+      "id": "F01",
+      "passed": true,
+      "method": "Real HTTP FastAPI/Groq and disk reread",
+      "detail": "Analysis, details and history dialog verified",
+      "real_groq_calls": 1,
+      "request_id": "12a090a94c894dd4b2a99d3aa077d8b3"
+    },
+    "F02": {
+      "id": "F02",
+      "passed": true,
+      "method": "Real form validation",
+      "detail": "Empty input rejected; duration 31 disables submit; 0 API calls",
+      "real_groq_calls": 0
+    },
+    "F03": {
+      "id": "F03",
+      "passed": true,
+      "method": "Controlled IOException at API boundary; Wi-Fi stays on",
+      "detail": "Loading ends, public message and retry, no history",
+      "real_groq_calls": 0
+    },
+    "F04": {
+      "id": "F04",
+      "passed": true,
+      "method": "Controlled HTTP 503 at API boundary",
+      "detail": "No crash or history; actionable error",
+      "real_groq_calls": 0
+    },
+    "F05": {
+      "id": "F05",
+      "passed": true,
+      "method": "Real UI plus repeated ViewModel launch while request gated",
+      "detail": "One network request and one history entry",
+      "real_groq_calls": 1,
+      "request_id": "949d0477fc2d4cbab7f802d3bec8a4bf"
+    },
+    "F06": {
+      "id": "F06",
+      "passed": true,
+      "method": "ActivityScenario CREATED then RESUMED during loading; real API after gate",
+      "detail": "State preserved, loading completed; no process death simulated",
+      "real_groq_calls": 1,
+      "request_id": "949d0477fc2d4cbab7f802d3bec8a4bf"
+    },
+    "F08": {
+      "id": "F08",
+      "passed": true,
+      "method": "Two real FastAPI/Groq requests",
+      "detail": "NoResult has question and no history; clarification gives one usable stored result",
+      "real_groq_calls": 2,
+      "request_id": "f4296a1f917644bc974765fae11ed4e1"
+    },
+    "F09": {
+      "id": "F09",
+      "passed": true,
+      "method": "Real HTTP FastAPI/Groq after injected network failure",
+      "detail": "Same session recovered and stored exactly one result",
+      "real_groq_calls": 1,
+      "request_id": "3f529fcfa84b43c1a001fac8033dfa92"
+    },
+    "F10": {
+      "id": "F10",
+      "passed": true,
+      "method": "adb install -r then am start MainActivity",
+      "detail": "Existing debug installation updated without clearing user data",
+      "model": "23030RAC7Y",
+      "android": "15",
+      "versionName": "0.4-lab7",
+      "versionCode": "4",
+      "debugApkSha256": "ba2596b30107f49131526a6b56cf8720d422b447a9e8d50fd5ad21b502c55754",
+      "testApkSha256": "362cc11a038d9a49a7f845b9528df1315da70026fec86397009277f6f65e5354",
+      "installedWithoutClearingData": true,
+      "launch": "Starting: Intent { cmp=com.example.meditrackai/.MainActivity }\r\nStatus: ok\r\nLaunchState: COLD\r\nActivity: com.example.meditrackai/.MainActivity\r\nTotalTime: 2833\r\nWaitTime: 2848\r\nComplete\r\n"
+    },
+    "F07": {
+      "id": "F07",
+      "passed": true,
+      "method": "Actual denied notification permission supplied before the test; operator restores it afterwards",
+      "detail": "Permission actions visible; AI tab accessible; no new permission granted by test",
+      "real_groq_calls": 0,
+      "date": "2026-11-05",
+      "testApkSha256": "8083045beccf2bbe5c6dda579dcad11357cfa937422ec54501c173aaabcbf0b9"
+    }
+  },
+  "preservation": {
+    "userPreferencesUnchanged": true,
+    "changedCount": 0,
+    "addedCount": 0,
+    "testPreferencesLeft": 0,
+    "permissionRestored": true
+  },
+  "not_verified": [
+    "process death",
+    "reboot/timezone/next-day reminder delivery",
+    "new release APK installation"
+  ],
+  "scope": "Local FastAPI and real Groq; controlled IOException/503 explicitly labelled; no Render deployment or release publication",
+  "notification_permission_restoration": "Verified 2026-11-05: permission restored; original preference hashes match; no test preferences left"
+}

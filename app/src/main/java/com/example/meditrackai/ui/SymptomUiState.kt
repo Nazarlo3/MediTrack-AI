@@ -7,6 +7,7 @@ sealed class SymptomUiState {
     object Idle : SymptomUiState()
     object Loading : SymptomUiState()
     data class Success(val result: SymptomAnalysis, val analysisId: String) : SymptomUiState()
+    data class NoResult(val result: SymptomAnalysis) : SymptomUiState()
     data class Error(val reason: SymptomError) : SymptomUiState() {
         val canRetry: Boolean get() = reason != SymptomError.INVALID_INPUT && reason != SymptomError.CONTEXT_LIMIT
         val message: String get() = when (reason) {

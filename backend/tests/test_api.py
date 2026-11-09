@@ -32,7 +32,7 @@ class ApiTests(unittest.TestCase):
         context = [{"role": "user", "content": "Синтетичний опис"}, {"role": "assistant", "content": "Уточніть"}]
         response = self.client.post("/analyze-symptom", json={"description": "Тестове уточнення", "context": context})
         self.assertEqual(200, response.status_code)
-        self.assertEqual({"category", "explanation", "urgency", "disclaimer", "follow_up_question", "context_used", "details_used"}, set(response.json()))
+        self.assertEqual({"category", "explanation", "urgency", "disclaimer", "follow_up_question", "context_used", "details_used", "has_usable_result"}, set(response.json()))
         self.assertTrue(response.json()["context_used"])
         self.assertEqual(2, len(self.fake.calls[0].context))
         self.assertEqual("Тестове уточнення", self.fake.calls[0].description)
@@ -42,6 +42,18 @@ class ApiTests(unittest.TestCase):
         response = self.client.post("/analyze-symptom", json={"description": "Синтетичний опис"})
         self.assertEqual(503, response.status_code)
         self.assertEqual({"detail": "AI-сервіс тимчасово недоступний"}, response.json())
+
+    def test_insufficient_information_is_http_success_with_question_not_service_failure(self):
+        from domain import AnalysisResult
+        class UnclearProvider:
+            def generate(self, request):
+                return AnalysisResult("інше", "Бракує опису самопочуття.", "звичайне",
+                                      follow_up_question="Що саме вас турбує?", has_usable_result=False)
+        app.dependency_overrides[get_provider] = lambda: UnclearProvider()
+        response = self.client.post("/analyze-symptom", json={"description": "Щось незрозуміле"})
+        self.assertEqual(200, response.status_code)
+        self.assertFalse(response.json()["has_usable_result"])
+        self.assertTrue(response.json()["follow_up_question"])
 
     def test_optional_details_are_strict_and_forwarded_with_server_acknowledgement(self):
         for payload in ({"duration_days": 1, "intensity": 0}, {"duration_days": 30}, {"intensity": 10}, {}):

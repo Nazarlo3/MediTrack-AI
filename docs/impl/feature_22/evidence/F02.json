@@ -1,0 +1,7 @@
+{
+  "id": "F02",
+  "passed": true,
+  "method": "Real form validation",
+  "detail": "Empty input rejected; duration 31 disables submit; 0 API calls",
+  "real_groq_calls": 0
+}

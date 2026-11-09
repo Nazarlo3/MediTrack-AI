@@ -1,0 +1,66 @@
+# ЛР7 — перелік змін для фінального Git-оформлення
+
+Окремий список, без git add .: не включати старі робочі зміни ЛР2–3, .idea, various files, .artifacts, .env чи підпис.
+
+- `app/build.gradle.kts`
+- `app/src/androidTest/java/com/example/meditrackai/Lab7PhoneScenarioTest.kt`
+- `app/src/main/java/com/example/meditrackai/data/symptoms/SymptomMapper.kt`
+- `app/src/main/java/com/example/meditrackai/domain/symptoms/SymptomModels.kt`
+- `app/src/main/java/com/example/meditrackai/network/ApiClient.kt`
+- `app/src/main/java/com/example/meditrackai/network/SymptomModels.kt`
+- `app/src/main/java/com/example/meditrackai/ui/SymptomAnalysisController.kt`
+- `app/src/main/java/com/example/meditrackai/ui/SymptomCheckScreen.kt`
+- `app/src/main/java/com/example/meditrackai/ui/SymptomUiState.kt`
+- `app/src/main/java/com/example/meditrackai/validation/SymptomResponseValidator.kt`
+- `app/src/test/java/com/example/meditrackai/SymptomAnalysisControllerTest.kt`
+- `app/src/test/java/com/example/meditrackai/SymptomResponseValidatorTest.kt`
+- `backend/ai_service.py`
+- `backend/domain.py`
+- `backend/evaluation/lab7/cases.json`
+- `backend/evaluation/lab7/README.md`
+- `backend/evaluation/lab7/results/20261104T141759079785Z.json`
+- `backend/evaluation/lab7/results/20261104T142501657502Z.json`
+- `backend/evaluation/lab7/results/SUMMARY.md`
+- `backend/evaluation/lab7/run.py`
+- `backend/models.py`
+- `backend/requirements-dev.txt`
+- `backend/tests/test_ai_service.py`
+- `backend/tests/test_api.py`
+- `docs/ai-component.md`
+- `docs/api-contract.md`
+- `docs/architecture.md`
+- `docs/decisions.md`
+- `docs/impl/feature_22/changelog.md`
+- `docs/impl/feature_22/defense.md`
+- `docs/impl/feature_22/evidence/android-build-fixed.txt`
+- `docs/impl/feature_22/evidence/android-build.txt`
+- `docs/impl/feature_22/evidence/attempt-1793802501587.txt`
+- `docs/impl/feature_22/evidence/attempt-1793802663359.txt`
+- `docs/impl/feature_22/evidence/attempt-1793802864073.txt`
+- `docs/impl/feature_22/evidence/attempt-1793833395535.txt`
+- `docs/impl/feature_22/evidence/attempt-1793833447268.txt`
+- `docs/impl/feature_22/evidence/backend-tests-fixed.txt`
+- `docs/impl/feature_22/evidence/backend-tests.txt`
+- `docs/impl/feature_22/evidence/F01.json`
+- `docs/impl/feature_22/evidence/F02.json`
+- `docs/impl/feature_22/evidence/F03.json`
+- `docs/impl/feature_22/evidence/F04.json`
+- `docs/impl/feature_22/evidence/F05.json`
+- `docs/impl/feature_22/evidence/F06.json`
+- `docs/impl/feature_22/evidence/F07.json`
+- `docs/impl/feature_22/evidence/F08.json`
+- `docs/impl/feature_22/evidence/F09.json`
+- `docs/impl/feature_22/evidence/F10.json`
+- `docs/impl/feature_22/files.md`
+- `docs/impl/feature_22/plan.md`
+- `docs/impl/feature_22/source-manifest.json`
+- `docs/impl/feature_22/verification.json`
+- `docs/impl/feature_22/verification.md`
+- `docs/known-limitations.md`
+- `docs/overview.md`
+- `docs/project-overview.md`
+- `docs/requirements.md`
+- `docs/ROADMAP.md`
+- `README.md`
+
+F07 пройдено. Дозвіл повернуто. Перед фінальним commit звірити diff і відповідність main-source manifest APK. Звіт/фото/APK залишаються локальними; публікація окрема.

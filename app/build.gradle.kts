@@ -25,8 +25,8 @@ android {
         applicationId = "com.example.meditrackai"
         minSdk = 29
         targetSdk = 37
-        versionCode = 4
-        versionName = "0.4"
+        versionCode = 5
+        versionName = "0.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -43,7 +43,17 @@ android {
     }
 
     buildTypes {
+        debug {
+            versionNameSuffix = "-debug"
+            val backendUrl = providers.gradleProperty("meditrack.backendUrl")
+                .getOrElse("https://meditrack-ai-xbk5.onrender.com/")
+            require(backendUrl.matches(Regex("https?://[A-Za-z0-9.:-]+/"))) {
+                "meditrack.backendUrl must be an HTTP(S) origin ending in /"
+            }
+            buildConfigField("String", "BACKEND_URL", "\"$backendUrl\"")
+        }
         release {
+            buildConfigField("String", "BACKEND_URL", "\"https://meditrack-ai-xbk5.onrender.com/\"")
             signingConfig = if (releaseKeystoreFile.isFile) signingConfigs.getByName("release") else null
             isMinifyEnabled = true
             isShrinkResources = true
@@ -59,6 +69,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

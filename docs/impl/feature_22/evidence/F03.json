@@ -1,0 +1,7 @@
+{
+  "id": "F03",
+  "passed": true,
+  "method": "Controlled IOException at API boundary; Wi-Fi stays on",
+  "detail": "Loading ends, public message and retry, no history",
+  "real_groq_calls": 0
+}

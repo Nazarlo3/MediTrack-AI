@@ -18,6 +18,7 @@ object SymptomResponseValidator {
         !response.explanation.isNullOrBlank() &&
         response.urgency in urgencies &&
         !response.disclaimer.isNullOrBlank() &&
+        (response.hasUsableResult != false || !response.followUpQuestion.isNullOrBlank()) &&
         (response.followUpQuestion == null ||
             (response.followUpQuestion.isNotBlank() && response.followUpQuestion.length <= 300))
 }

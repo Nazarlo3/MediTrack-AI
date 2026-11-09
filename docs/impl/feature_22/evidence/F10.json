@@ -1,0 +1,14 @@
+{
+  "id": "F10",
+  "passed": true,
+  "method": "adb install -r then am start MainActivity",
+  "detail": "Existing debug installation updated without clearing user data",
+  "model": "23030RAC7Y",
+  "android": "15",
+  "versionName": "0.4-lab7",
+  "versionCode": "4",
+  "debugApkSha256": "ba2596b30107f49131526a6b56cf8720d422b447a9e8d50fd5ad21b502c55754",
+  "testApkSha256": "362cc11a038d9a49a7f845b9528df1315da70026fec86397009277f6f65e5354",
+  "installedWithoutClearingData": true,
+  "launch": "Starting: Intent { cmp=com.example.meditrackai/.MainActivity }\r\nStatus: ok\r\nLaunchState: COLD\r\nActivity: com.example.meditrackai/.MainActivity\r\nTotalTime: 2833\r\nWaitTime: 2848\r\nComplete\r\n"
+}

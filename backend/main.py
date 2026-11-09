@@ -1,27 +1,58 @@
 """FastAPI HTTP boundary. Run from backend/: python -m uvicorn main:app."""
 
 import logging
+from time import perf_counter
+import asyncio
+from contextlib import asynccontextmanager, suppress
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Request, Header, Response
 from fastapi.responses import JSONResponse
 import uvicorn
 
 from analysis_service import AnalysisService
-from dependencies import get_analysis_service
+from dependencies import get_analysis_service, get_collection_service, get_collection_repository
+from collection_service import CollectionService
+from collection_routes import router as collection_router
 from domain import AnalysisError, InvalidInputError
 from models import SymptomRequest, SymptomResponse
 from request_context import RequestContextMiddleware, current_request_id
+from config import get_settings
+from collection_repository import CollectionRepository
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("meditrack.api")
+
+async def purge_collection_periodically():
+    while True:
+        try:
+            repository = get_collection_repository(get_settings())
+            if repository is not None:
+                await asyncio.to_thread(repository.purge)
+        except Exception:
+            logger.warning('collection_cleanup_failed')
+        await asyncio.sleep(3600)
+
+
+@asynccontextmanager
+async def lifespan(app):
+    task = asyncio.create_task(purge_collection_periodically())
+    try:
+        yield
+    finally:
+        task.cancel()
+        with suppress(asyncio.CancelledError):
+            await task
+
 
 app = FastAPI(
     title="MediTrack AI backend",
     description="Мінімальний backend для категоризації неідентифікаційного опису симптомів.",
     version="0.1.0",
+    lifespan=lifespan,
 )
 app.add_middleware(RequestContextMiddleware)
+app.include_router(collection_router)
 
 
 @app.get("/health")
@@ -30,8 +61,16 @@ def health_check():
 
 
 @app.post("/analyze-symptom", response_model=SymptomResponse)
-def analyze_symptom(request: SymptomRequest, service: Annotated[AnalysisService, Depends(get_analysis_service)]):
-    return SymptomResponse.from_domain(service.analyze(request.to_domain()))
+def analyze_symptom(request: SymptomRequest, response: Response,
+                    service: Annotated[AnalysisService, Depends(get_analysis_service)],
+                    collection: Annotated[CollectionService, Depends(get_collection_service)],
+                    x_collection_token: Annotated[str | None, Header()] = None):
+    started = perf_counter()
+    result = SymptomResponse.from_domain(service.analyze(request.to_domain()))
+    response.headers['X-Collection-Status'] = collection.record(
+        request.collection, x_collection_token, request, result, (perf_counter()-started)*1000)
+    response.headers['Cache-Control'] = 'no-store'
+    return result
 
 
 @app.exception_handler(AnalysisError)

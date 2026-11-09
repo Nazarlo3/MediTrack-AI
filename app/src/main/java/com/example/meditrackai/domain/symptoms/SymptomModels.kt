@@ -17,7 +17,8 @@ data class SymptomAnalysis(
     val disclaimer: String = "Це не медичний діагноз. У разі проблем зі здоров'ям зверніться до лікаря.",
     val followUpQuestion: String? = null,
     val contextUsed: Boolean? = null,
-    val detailsUsed: Boolean? = null
+    val detailsUsed: Boolean? = null,
+    val hasUsableResult: Boolean? = null
 )
 
 data class SymptomHistoryEntry(

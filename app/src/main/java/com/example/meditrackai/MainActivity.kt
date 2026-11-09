@@ -45,7 +45,8 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(innerPadding)
                     ) {
-                        SymptomCheckScreen(viewModel = symptomViewModel, themeMode = mode, onThemeChange = { selected ->
+                        SymptomCheckScreen(viewModel = symptomViewModel, themeMode = mode,
+                            collectionSettings = dependencies.collectionSettings, onThemeChange = { selected ->
                             scope.launch {
                                 if (!settings.save(selected)) snackbar.showSnackbar("Не вдалося зберегти тему.")
                             }

@@ -1,0 +1,16 @@
+{
+  "provenance": "Synthetic engineering examples. First five exactly reuse details/cases.json regressions; sixth reuses d3. Boundary and invalid cases added for Lab7 before the run. Not clinical labels or recovered historical Lab4 input.",
+  "acceptance": "8/8 valid categories, 5/5 regression, structured details retained, 2/2 rejected invalid; report all failures without hidden retries",
+  "cases": [
+    {"id":"r1_fatigue","group":"typical","regression":true,"request":{"description":"Після довгої прогулянки трохи втомився, після відпочинку краще. Інших скарг немає."},"expected":{"category":"загальне нездужання"}},
+    {"id":"r2_cough","group":"typical","regression":true,"request":{"description":"Другий день кашляю. Дихати можу нормально, травми не було."},"expected":{"category":"респіраторне"}},
+    {"id":"r3_digestion","group":"typical","regression":true,"request":{"description":"Після їжі відчуваю здуття живота й дискомфорт у животі."},"expected":{"category":"шлунково-кишкове"}},
+    {"id":"r4_skin","group":"typical","regression":true,"request":{"description":"На передпліччі суха шкіра й свербіж, без травми та відомого зв'язку з алергеном."},"expected":{"category":"шкірне"}},
+    {"id":"r5_headache","group":"typical","regression":true,"request":{"description":"Після роботи за комп'ютером трохи болить голова. Удару головою не було."},"expected":{"category":"неврологічне"}},
+    {"id":"t6_injury","group":"typical","regression":false,"request":{"description":"Вдарив гомілку об край ліжка, болить у місці удару. Рани немає.","duration_days":2,"intensity":5},"expected":{"category":"травми та ушкодження","explanation_contains":["2 дн.","5/10"]}},
+    {"id":"b1_minimum","group":"boundary","regression":false,"request":{"description":"Був свербіж сухої шкіри на передпліччі, зараз не турбує. Травми й алергії не було.","duration_days":1,"intensity":0},"expected":{"category":"шкірне","explanation_contains":["1 дн.","0/10"]}},
+    {"id":"b2_maximum","group":"boundary","regression":false,"request":{"description":"Болить голова, травми не було.","duration_days":30,"intensity":10},"expected":{"category":"неврологічне","explanation_contains":["30 дн.","10/10"]}},
+    {"id":"i1_empty","group":"invalid","regression":false,"request":{"description":""},"expected":{"http_status":422}},
+    {"id":"i2_duration","group":"invalid","regression":false,"request":{"description":"Болить голова, травми не було.","duration_days":31},"expected":{"http_status":422}}
+  ]
+}

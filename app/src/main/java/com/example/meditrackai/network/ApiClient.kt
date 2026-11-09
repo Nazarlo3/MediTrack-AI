@@ -7,8 +7,7 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
-
-private const val BASE_URL = "https://meditrack-ai-xbk5.onrender.com/"
+import com.example.meditrackai.BuildConfig
 
 interface MediTrackApi {
     @POST("analyze-symptom")
@@ -16,6 +15,7 @@ interface MediTrackApi {
 }
 
 object ApiClient {
+    val collectionApi: CollectionApi by lazy { retrofit.create(CollectionApi::class.java) }
 
     private val okHttpClient = OkHttpClient.Builder()
         .connectTimeout(60, TimeUnit.SECONDS)
@@ -23,12 +23,12 @@ object ApiClient {
         .writeTimeout(60, TimeUnit.SECONDS)
         .build()
 
-    val api: MediTrackApi by lazy {
+    private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(BuildConfig.BACKEND_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(MediTrackApi::class.java)
     }
+    val api: MediTrackApi by lazy { retrofit.create(MediTrackApi::class.java) }
 }

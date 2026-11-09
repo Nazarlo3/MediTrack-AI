@@ -1,0 +1,8 @@
+{
+  "id": "F01",
+  "passed": true,
+  "method": "Real HTTP FastAPI\/Groq and disk reread",
+  "detail": "Analysis, details and history dialog verified",
+  "real_groq_calls": 1,
+  "request_id": "12a090a94c894dd4b2a99d3aa077d8b3"
+}

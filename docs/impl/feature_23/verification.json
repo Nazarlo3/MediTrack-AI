@@ -1,0 +1,26 @@
+{
+  "android": {
+    "tests": 67,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "lint": {
+    "Error": 0,
+    "Warning": 45,
+    "Fatal": 0
+  },
+  "backend_full": 51,
+  "backend_collection": 9,
+  "phone": {
+    "testsPassed": true,
+    "changedUserFiles": 0,
+    "addedFiles": 0,
+    "isolatedTestPreferencesLeft": 0
+  },
+  "diff_check": true,
+  "selected_secret_pattern_scan": true,
+  "new_dependencies": false,
+  "debug_apk_sha256": "25c86d2eed6cf8e145d7c886d1171a49276bd061866c6bf9f7e4ccc0c9de52f3",
+  "scope": "Synthetic backend/FakeProvider and isolated phone storage tests; no live cloud collection, screenshots, admin web UI or deployment verification"
+}

@@ -1,5 +1,19 @@
 # API Contract — MediTrack AI
 
+## ЛР7 — явна відсутність придатного результату
+
+Поточний HTTP 200 містить вісім полів: category, explanation, urgency, disclaimer, follow_up_question, context_used, details_used, **has_usable_result**. Останнє — boolean, отримане від AI; це не confidence. При false обов’язкове непорожнє питання. Android показує NoResult й дозволяє уточнення, але не зберігає цю відповідь як завершений аналіз. HTTP 503 означає технічний збій, а не NoResult. Категорія «інше» не визначає цей стан автоматично.
+
+Для сумісності адаптер допускає відсутнє поле від старого провайдера як true; Android допускає відсутнє поле старого сервера/історії як попередній успіх. Новий промпт вимагає явний boolean; неboolean або false без питання дають 503. Старі Android-клієнти ігноруватимуть нове поле, тому для нового стану потрібні обидва оновлені компоненти. Демонстрація ЛР7 використовує локальний backend, не змінюючи Render.
+
+Приклад формату (не протокол AI-вимірювання):
+```json
+{"category":"інше","explanation":"Для аналізу потрібен опис самопочуття.","urgency":"звичайне","disclaimer":"Це не медичний діагноз. У разі проблем зі здоров'ям зверніться до лікаря.","follow_up_question":"Що саме вас турбує?","context_used":false,"details_used":false,"has_usable_result":false}
+```
+
+Нижче — історія сумісних розширень. Адресу debug задає -Pmeditrack.backendUrl; release використовує вказаний Production URL.
+
+
 ## 20.10.2026 — тривалість та інтенсивність (ЛР6)
 
 Той самий `POST /analyze-symptom` додатково приймає необов'язкові `duration_days` (ціле 1–30) та `intensity` (ціле 0–10, суб'єктивна вираженість). Можна передати одне поле, обидва, null або не передавати. Строки, boolean, дроби й значення поза межами дають 422 до AI-виклику. Старі description/context працюють без цих полів; їхні попередні обмеження збережені.
@@ -106,3 +120,14 @@ POST /analyze-symptom зберігає обов'язковий description (3–
 Кожна HTTP-відповідь містить **X-Request-ID**, включно з помилками валідації та неочікуваною 500. Це UUID hex, створений сервером; вхідний X-Request-ID ігнорується. Такий самий request_id міститься в серверних логах. JSON-поле request_id не додавалося, Android змін не потребує. ID призначений для пошуку помилки, не для автентифікації/ідемпотентності.
 
 FakeProvider доступний лише за явного AI_PROVIDER=fake або DI override у тестах; успіх має позначку синтетичного demo. FAKE_PROVIDER_ERROR=true дає контрольовану 503. Немає автоматичної підміни Groq на fake.
+
+
+## Добровільне збереження — feature_23 (05.11.2026)
+
+Додаткове nullable-поле запиту `collection: {"consent_version": 1, "request_id": "<UUID>"}` та заголовок `X-Collection-Token` (64 hex символи). Без collection збереження не виконується. Метадані не передаються AI. Тіло SymptomResponse не змінене; `X-Collection-Status` повідомляє saved/not_requested/disabled/rejected/revoked/unavailable. Несправність запису не перетворює успіх AI на помилку. Зберігається лише поточний запит без raw context; відповідь може повторювати контекст.
+
+Нові маршрути: DELETE /collection/mine з capability-token, GET /collection/admin/records (limit 1–100, offset ≥0), GET /collection/admin/stats. Для GET потрібен окремий серверний Bearer-секрет ≥32 символи. Відкликання ключа блокує пізні записи; після успішного видалення Android вимикає збір та прибирає ключ. Повна схема, статуси, строк і запуск — [data-collection.md](data-collection.md). У production не розгорнуто.
+
+## Google Sheets — 09.11.2026
+
+Google Sheets (feature_24): приймається consent_version 2; Google-збереження вимагає 2, старій згоді 1 повертається X-Collection-Status=consent_required. Тіло AI-відповіді та власне видалення незмінні. SQLite приймає обидві версії. Деталі — docs/data-collection.md.

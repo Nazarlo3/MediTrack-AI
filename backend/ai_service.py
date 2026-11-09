@@ -1,3 +1,4 @@
+
 """
 AI-компонент MediTrack AI.
 
@@ -122,6 +123,18 @@ SYSTEM_PROMPT += """
 У розмові це початкові атрибути перевірки: пізніші уточнення можуть їх виправити.
 """
 
+SYSTEM_PROMPT += """
+
+Додай у JSON булеве поле has_usable_result.
+true — опис дає підстави для інформаційної категоризації скарги, навіть якщо потрібні
+подальші уточнення. Категорія «інше» сама по собі не означає відсутності результату.
+false — немає опису самопочуття чи події з можливим ушкодженням або текст настільки
+неясний, що категоризація була б вигадкою. Наприклад, «Монітор не працює» — false.
+У такому разі explanation коротко пояснює брак даних, follow_up_question містить
+конкретне питання про скаргу. Не вигадуй симптомів і не запевняй у відсутності небезпеки.
+Ураховуй всю розмову: уточнення може зробити попередній невизначений запит придатним.
+"""
+
 
 def build_user_message(request: AnalysisInput) -> str:
     """Prepare optional attributes without changing the legacy description-only request."""
@@ -195,4 +208,10 @@ def _validate_ai_result(parsed: object) -> dict:
         if question is not None and (not isinstance(question, str) or not question.strip() or len(question) > 300):
             raise ValueError("Invalid follow-up question")
         result["follow_up_question"] = question.strip() if question is not None else None
+    usable = parsed.get("has_usable_result", True)
+    if type(usable) is not bool:
+        raise ValueError("Invalid result availability")
+    if not usable and not result.get("follow_up_question"):
+        raise ValueError("Missing question for insufficient information")
+    result["has_usable_result"] = usable
     return result

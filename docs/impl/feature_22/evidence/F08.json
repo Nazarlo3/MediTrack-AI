@@ -1,0 +1,8 @@
+{
+  "id": "F08",
+  "passed": true,
+  "method": "Two real FastAPI\/Groq requests",
+  "detail": "NoResult has question and no history; clarification gives one usable stored result",
+  "real_groq_calls": 2,
+  "request_id": "f4296a1f917644bc974765fae11ed4e1"
+}

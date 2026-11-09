@@ -1,0 +1,138 @@
+python.exe : test_all_sixteen_categories_are_supported (test_ai_service.AIServiceTests.test_all_sixteen_categories_are_
+supported) ... ok
+At line:2 char:71
++ ... | Out-Null; & 'C:/Users/Nazar/AppData/Local/Python/pythoncore-3.14-64 ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (test_all_sixtee...pported) ... ok:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+test_android_accepts_exactly_the_same_categories (test_ai_service.AIServiceTests.test_android_accepts_exactly_the_same_
+categories) ... ok
+test_availability_is_explicit_and_legacy_other_remains_usable (test_ai_service.AIServiceTests.test_availability_is_expl
+icit_and_legacy_other_remains_usable) ... ok
+test_endpoint_returns_context_acknowledgement (test_ai_service.AIServiceTests.test_endpoint_returns_context_acknowledge
+ment) ... ok
+test_follow_up_sends_previous_turns_before_new_answer (test_ai_service.AIServiceTests.test_follow_up_sends_previous_tur
+ns_before_new_answer) ... ok
+test_invalid_context_never_calls_provider (test_ai_service.AIServiceTests.test_invalid_context_never_calls_provider) ..
+. ok
+test_lor_case_is_normalized_to_contract_value (test_ai_service.AIServiceTests.test_lor_case_is_normalized_to_contract_v
+alue) ... ok
+test_malformed_provider_results_raise_controlled_error (test_ai_service.AIServiceTests.test_malformed_provider_results_
+raise_controlled_error) ... WARNING:meditrack.ai:groq_invalid_response request_id=-
+WARNING:meditrack.ai:groq_invalid_response request_id=-
+WARNING:meditrack.ai:groq_invalid_response request_id=-
+WARNING:meditrack.ai:groq_invalid_response request_id=-
+ok
+test_missing_or_blank_fields_are_rejected (test_ai_service.AIServiceTests.test_missing_or_blank_fields_are_rejected) ..
+. ok
+test_non_object_results_are_rejected (test_ai_service.AIServiceTests.test_non_object_results_are_rejected) ... ok
+test_optional_details_prepare_separate_ai_message_without_fabricating_missing_fields (test_ai_service.AIServiceTests.te
+st_optional_details_prepare_separate_ai_message_without_fabricating_missing_fields) ... ok
+test_question_is_optional_but_validated (test_ai_service.AIServiceTests.test_question_is_optional_but_validated) ... ok
+test_request_contains_context_policy_and_keeps_description_as_data (test_ai_service.AIServiceTests.test_request_contain
+s_context_policy_and_keeps_description_as_data) ... ok
+test_request_context_validation_and_legacy_compatibility (test_ai_service.AIServiceTests.test_request_context_validatio
+n_and_legacy_compatibility) ... ok
+test_timeout_is_controlled (test_ai_service.AIServiceTests.test_timeout_is_controlled) ... WARNING:meditrack.ai:groq_ti
+meout request_id=-
+ok
+test_unknown_category_uses_existing_fallback (test_ai_service.AIServiceTests.test_unknown_category_uses_existing_fallba
+ck) ... ok
+test_unknown_urgency_is_not_downgraded_to_normal (test_ai_service.AIServiceTests.test_unknown_urgency_is_not_downgraded
+_to_normal) ... ok
+test_composition_selects_two_implementations_of_same_protocol (test_analysis_service.AnalysisServiceTests.test_composit
+ion_selects_two_implementations_of_same_protocol) ... ok
+test_context_is_forwarded_and_acknowledged (test_analysis_service.AnalysisServiceTests.test_context_is_forwarded_and_ac
+knowledged) ... ok
+test_domain_rejects_invalid_details_before_provider_and_accepts_zero (test_analysis_service.AnalysisServiceTests.test_d
+omain_rejects_invalid_details_before_provider_and_accepts_zero) ... ok
+test_fake_error_propagates_as_domain_error (test_analysis_service.AnalysisServiceTests.test_fake_error_propagates_as_do
+main_error) ... ok
+test_fake_success_normalizes_input_without_network (test_analysis_service.AnalysisServiceTests.test_fake_success_normal
+izes_input_without_network) ... ok
+test_incomplete_pairs_and_length_limits_never_call_provider (test_analysis_service.AnalysisServiceTests.test_incomplete
+_pairs_and_length_limits_never_call_provider) ... ok
+test_whitespace_does_not_call_provider (test_analysis_service.AnalysisServiceTests.test_whitespace_does_not_call_provid
+er) ... ok
+test_api (unittest.loader._FailedTest.test_api) ... ERROR
+test_baseline_does_not_claim_context_or_new_category (test_evaluation.EvaluationTests.test_baseline_does_not_claim_cont
+ext_or_new_category) ... ok
+test_context_is_forwarded_and_success_is_recorded (test_evaluation.EvaluationTests.test_context_is_forwarded_and_succes
+s_is_recorded) ... ok
+test_details_check_requires_actual_explanation_not_only_acknowledgement (test_evaluation.EvaluationTests.test_details_c
+heck_requires_actual_explanation_not_only_acknowledgement) ... ok
+test_invalid_json_is_not_counted_as_a_valid_response (test_evaluation.EvaluationTests.test_invalid_json_is_not_counted_
+as_a_valid_response) ... WARNING:meditrack.ai:groq_invalid_response request_id=-
+ok
+r1_fatigue current PASS
+test_resume_preserves_failures_and_does_not_retry_semantic_mismatches (test_evaluation.EvaluationTests.test_resume_pres
+erves_failures_and_does_not_retry_semantic_mismatches) ... ok
+test_timeout_is_counted_once_without_secret_or_retry (test_evaluation.EvaluationTests.test_timeout_is_counted_once_with
+out_secret_or_retry) ... WARNING:meditrack.ai:groq_timeout request_id=-
+ok
+test_lab3_urgency_regression (unittest.loader._FailedTest.test_lab3_urgency_regression) ... ERROR
+
+======================================================================
+ERROR: test_api (unittest.loader._FailedTest.test_api)
+----------------------------------------------------------------------
+{"baseline": {"counts": {"regression": 0, "extension": 0, "context": 0, "valid_responses": 10}, "accepted": false}, "current": {"counts": {"regression": 5, "extension": 3, "context": 2, "valid_responses": 10}, "accepted": true}}
+Evidence: <user-home>\AppData\Local\Temp\tmp2k1q1z_d\after.json
+ImportError: Failed to import test module: test_api
+Traceback (most recent call last):
+  File "<user-home>\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\loader.py", line 433, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "<user-home>\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\loader.py", line 374, in _get_module_from_n
+ame
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "<repository>\backend\tests\test_api.py", line 10, in <module>
+    from fastapi.testclient import TestClient
+  File "<user-home>\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\fastapi\testclient.py", line 1, in <mo
+dule>
+    from starlette.testclient import TestClient as TestClient  # noqa
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<user-home>\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\starlette\testclient.py", line 41, in
+<module>
+    raise RuntimeError(
+    ...<3 lines>...
+    ) from None
+RuntimeError: The starlette.testclient module requires the httpx2 package to be installed.
+You can install this with:
+    $ pip install httpx2
+
+
+
+======================================================================
+ERROR: test_lab3_urgency_regression (unittest.loader._FailedTest.test_lab3_urgency_regression)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_lab3_urgency_regression
+Traceback (most recent call last):
+  File "<user-home>\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\loader.py", line 433, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "<user-home>\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\loader.py", line 374, in _get_module_from_n
+ame
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "<repository>\backend\tests\test_lab3_urgency_regression.py", line 11, in <m
+odule>
+    from fastapi.testclient import TestClient
+  File "<user-home>\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\fastapi\testclient.py", line 1, in <mo
+dule>
+    from starlette.testclient import TestClient as TestClient  # noqa
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<user-home>\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\starlette\testclient.py", line 41, in
+<module>
+    raise RuntimeError(
+    ...<3 lines>...
+    ) from None
+RuntimeError: The starlette.testclient module requires the httpx2 package to be installed.
+You can install this with:
+    $ pip install httpx2
+
+
+
+----------------------------------------------------------------------
+Ran 32 tests in 0.824s
+
+FAILED (errors=2)

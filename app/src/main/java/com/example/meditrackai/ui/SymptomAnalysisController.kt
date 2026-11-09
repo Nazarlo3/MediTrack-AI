@@ -35,7 +35,7 @@ class SymptomAnalysisController(
     private var conversation = emptyList<ConversationMessage>()
     private var lastRequest: SymptomInput? = null
     private var activeJob: Job? = null
-    private var lastSuccess: SymptomUiState.Success? = null
+    private var lastSuccess: SymptomUiState? = null
     private var initialDetails: SymptomInput? = null
 
     init {
@@ -81,11 +81,15 @@ class SymptomAnalysisController(
                 coroutineContext.ensureActive()
                 conversation = outcome.nextContext
                 _canClarify.value = conversation.size <= 6
-                val success = SymptomUiState.Success(outcome.result, outcome.historyEntry.id)
+                val success = if (outcome.result.hasUsableResult != false)
+                    SymptomUiState.Success(outcome.result, outcome.historyEntry.id)
+                else SymptomUiState.NoResult(outcome.result)
                 lastSuccess = success
                 _uiState.value = success
-                updateHistory("Не вдалося зберегти історію перевірок.") {
-                    repository.saveHistory(outcome.historyEntry)
+                if (outcome.result.hasUsableResult != false) {
+                    updateHistory("Не вдалося зберегти історію перевірок.") {
+                        repository.saveHistory(outcome.historyEntry)
+                    }
                 }
             } catch (e: CancellationException) { throw e }
             catch (e: SymptomFailure) {

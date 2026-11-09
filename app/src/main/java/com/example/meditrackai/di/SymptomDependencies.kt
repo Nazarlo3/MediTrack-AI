@@ -12,8 +12,10 @@ import com.example.meditrackai.ui.SymptomViewModel
 
 /** Manual composition root: real dependencies are not created inside the ViewModel. */
 class SymptomDependencies(application: Application) {
+    val collectionSettings = com.example.meditrackai.data.DataCollectionSettings(application)
     private val store = LocalDataStore(application)
-    private val repository = DefaultSymptomRepository(ApiClient.api, SharedPreferencesSymptomHistorySource(store))
+    private val repository = DefaultSymptomRepository(ApiClient.api, SharedPreferencesSymptomHistorySource(store),
+        collectionSettings, ApiClient.collectionApi)
     val viewModelFactory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass == SymptomViewModel::class.java)
