@@ -18,7 +18,11 @@ class DefaultSymptomRepository(
                 .also { collection?.report(it.headers()["X-Collection-Status"]) }
         } else api.analyzeSymptom(input.toRequest())
         if (!response.isSuccessful) throw SymptomFailure(
-            if (response.code() == 400 || response.code() == 422) SymptomError.INVALID_INPUT else SymptomError.SERVER
+            when (response.code()) {
+                400, 422 -> SymptomError.INVALID_INPUT
+                429 -> SymptomError.RATE_LIMIT
+                else -> SymptomError.SERVER
+            }
         )
         val body = response.body() ?: throw SymptomFailure(SymptomError.INVALID_RESPONSE)
         val result = body.toDomain()

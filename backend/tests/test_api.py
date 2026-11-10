@@ -18,6 +18,7 @@ import ai_service
 
 class ApiTests(unittest.TestCase):
     def setUp(self):
+        app.state.api_protection.reset_window()
         self.previous_overrides = app.dependency_overrides.copy()
         self.fake = FakeProvider()
         app.dependency_overrides[get_provider] = lambda: self.fake

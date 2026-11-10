@@ -51,11 +51,13 @@ class CollectionRepository:
                         json.dumps(response, ensure_ascii=False), model, elapsed_ms, consent_version))
         return 'saved'
 
-    def delete(self, token):
+    def delete(self, token, *, pending=False):
         owner = self.owner(token)
         with self._connect() as db:
             db.execute('BEGIN IMMEDIATE')
-            db.execute('INSERT OR IGNORE INTO revoked VALUES (?)', (owner,))
+            known = db.execute('SELECT 1 FROM records WHERE owner=? LIMIT 1', (owner,)).fetchone()
+            if known or pending:
+                db.execute('INSERT OR IGNORE INTO revoked VALUES (?)', (owner,))
             count = db.execute('DELETE FROM records WHERE owner=?', (owner,)).rowcount
         return count
 

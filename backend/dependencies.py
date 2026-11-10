@@ -12,6 +12,7 @@ from fake_provider import FakeProvider
 from collection_service import CollectionService
 from collection_repository import CollectionRepository
 from functools import lru_cache
+import logging
 
 
 def get_provider(settings: Annotated[Settings, Depends(get_settings)]) -> AIProvider:
@@ -25,8 +26,23 @@ def get_analysis_service(provider: Annotated[AIProvider, Depends(get_provider)])
 
 
 def get_collection_service(settings: Annotated[Settings, Depends(get_settings)]) -> CollectionService:
-    return CollectionService(get_collection_repository(settings),
-                             settings.model if settings.provider == 'groq' else 'fake:' + settings.model)
+    return collection_service_for(settings)
+
+
+@lru_cache(maxsize=4)
+def collection_service_for(settings: Settings):
+    repo = get_collection_repository(settings)
+    dispatcher = None
+    unavailable = False
+    if settings.google_sheets_id and settings.collection_outbox_path:
+        from collection_dispatcher import CollectionDispatcher
+        try:
+            dispatcher = CollectionDispatcher(repo, path=settings.collection_outbox_path)
+        except Exception:
+            logging.getLogger('meditrack.collection').warning('collection_outbox_unavailable')
+            unavailable = True
+    return CollectionService(repo, settings.model if settings.provider == 'groq' else 'fake:' + settings.model,
+                             dispatcher, unavailable=unavailable)
 
 
 @lru_cache(maxsize=4)

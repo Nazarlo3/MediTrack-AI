@@ -1,0 +1,18 @@
+{
+  "version": "0.5.1",
+  "versionCode": 6,
+  "status": "verified_before_local_commit",
+  "verified_date": "2026-11-10",
+  "backend_index_snapshot": {"tests": 75, "failures": 0, "errors": 0},
+  "android_unit": {"tests": 69, "failures": 0, "errors": 0, "skipped": 0},
+  "android_debug_build": "passed",
+  "android_lint": {"errors": 0, "warnings": 47},
+  "phone": "6 prior feature_25 tests passed; version-only 0.5.1 phone run not claimed",
+  "selected_files": 49,
+  "unrelated_files_hash_verified": 29,
+  "secret_pattern_scan": "passed",
+  "diff_check": "passed",
+  "render_inspection": {"plan": "free", "persistent_disk": false, "read_only": true},
+  "deployed": false,
+  "release_published": false
+}

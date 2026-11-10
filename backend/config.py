@@ -23,6 +23,7 @@ class Settings:
     google_sheets_id: str = ''
     google_credentials_file: str = ''
     google_http_transport: str = 'requests'
+    collection_outbox_path: str = ''
 
     def __post_init__(self):
         if self.provider not in {"groq", "fake"} or not self.model.strip():
@@ -30,6 +31,8 @@ class Settings:
         if not math.isfinite(self.timeout_seconds) or self.timeout_seconds <= 0:
             raise ConfigurationError()
         if self.google_http_transport not in {'requests', 'curl'}:
+            raise ConfigurationError()
+        if self.collection_outbox_path == ':memory:':
             raise ConfigurationError()
 
 
@@ -51,6 +54,7 @@ def get_settings() -> Settings:
             google_sheets_id=os.getenv('GOOGLE_SHEETS_ID', '').strip(),
             google_credentials_file=os.getenv('GOOGLE_APPLICATION_CREDENTIALS', '').strip(),
             google_http_transport=os.getenv('GOOGLE_HTTP_TRANSPORT', 'requests').strip(),
+            collection_outbox_path=os.getenv('COLLECTION_OUTBOX_PATH', '').strip(),
         )
     except (ValueError, TypeError) as exc:
         raise ConfigurationError() from exc

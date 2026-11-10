@@ -1,6 +1,7 @@
 package com.example.meditrackai.data
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.example.meditrackai.network.CollectionApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +21,15 @@ class DataCollectionSettings(context: Context) : CollectionPreferences {
     val choice: StateFlow<CollectionChoice> = state
     private val statusState = MutableStateFlow("")
     val status: StateFlow<String> = statusState
-    private val lock = Any()
+    private companion object { val lock = Any() }
+    // Activity recreation can leave the retained ViewModel with another settings instance.
+    // SharedPreferences listeners are weakly held; retain ours for this instance's lifetime.
+    private val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == "enabled" || key == null) {
+            state.value = CollectionChoice(prefs.getBoolean("enabled", true))
+        }
+    }
+    init { prefs.registerOnSharedPreferenceChangeListener(listener) }
 
     suspend fun choose(enabled: Boolean): Boolean = withContext(Dispatchers.IO) {
         synchronized(lock) {
@@ -33,7 +42,8 @@ class DataCollectionSettings(context: Context) : CollectionPreferences {
 
     override suspend fun tokenForCollection(): String? = withContext(Dispatchers.IO) {
         synchronized(lock) {
-            if (!state.value.mayCollect) return@synchronized null
+            // Persisted choice is authoritative, even before the UI listener is dispatched.
+            if (!prefs.getBoolean("enabled", true)) return@synchronized null
             token()
         }
     }
@@ -48,6 +58,7 @@ class DataCollectionSettings(context: Context) : CollectionPreferences {
     override fun report(status: String?) {
         statusState.value = when (status) {
             "saved" -> "Останнє звернення збережено на сервері."
+            "queued" -> "Останнє звернення передано в чергу збереження. Запис у Google ще не підтверджено."
             "disabled" -> "На сервері збір даних поки не налаштований."
             "revoked" -> "Серверне збереження для цього встановлення вимкнено. Зверніться до адміністратора проєкту."
             "consent_required" -> "Сервер потребує новішої версії налаштувань збору даних."

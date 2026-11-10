@@ -1,5 +1,15 @@
 # Архітектура MediTrack AI
 
+0.5.1: `collection_outbox.py` замінює попередню RAM-чергу приватним SQLite outbox за `COLLECTION_OUTBOX_PATH`; commit до queued, ack після Google, відновлення/дедуплікація/відкликання, TTL 24 години. Без постійного сховища — синхронний Google-запис із фактичним saved/unavailable. JSON аналізу сумісний. Виявлено free Render без диска; постійність там не припускається. [Режими й обмеження](data-collection.md).
+
+## Поточні локальні зміни feature_25
+
+`MediTrackApplication` утримує єдиний `SymptomDependencies` для Activity та збереженої ViewModel. `DataCollectionSettings` перевіряє persisted enabled перед запитом і слухає зміни інших екземплярів. Налаштування — окремий `AppSettingsScreen`: тема, збір, GitHub, версія PackageManager та безпечна технічна діагностика. OkHttp зберігає в RAM лише код/час/валідний X-Request-ID останнього AI-запиту, без тіл чи ключів. Release забороняє cleartext; HTTP дозволений тільки debug manifest.
+
+API має bounded admission middleware (частота/одночасність/розмір/час надсилання); це не автентифікація. Google writer використовує чергу RAM на 64 задачі, 3 спроби та дедуплікацію, повертає queued до запису. Відкликання враховує поточні AI-запити/чергу. Один процес/інстанс обов'язковий; черга не переживає рестарт. `MedicationReminderScheduler` підтверджує доставку після notify, повторює невдалу доставку до трьох разів у межах дня; стабільний notification tag замінює попереднє повідомлення при повторі. Гарантії exactly-once або видимості користувачем немає. Джерела й перевірки: [feature_25](impl/feature_25/plan.md), [API](api-contract.md), [збір](data-collection.md).
+
+Реліз 0.5 уже опубліковано ([протокол](impl/release_0_5/changelog.md)); feature_25 ще не розгорнуто. Наступні розділи містять історичні зрізи.
+
 Підготовка розгортання 0.5/code 5 (09.11.2026): debug працює через HTTPS Render, суфікс -debug. Опис нижче зі станом 0.4/ЛР7 є історичним зрізом, доповненим feature_23/24. Фактичний статус публікації — docs/impl/deploy_sheets/changelog.md.
 
 Стан: 04.11.2026, 0.4 та локальна інтеграція ЛР7 (`0.4-lab7` debug). Опублікований release 0.4 не містить змін ЛР7. Карта коду; фактичні перевірки й межі — [feature_22/verification.md](impl/feature_22/verification.md).

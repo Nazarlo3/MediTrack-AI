@@ -118,9 +118,11 @@ class SheetsCollectionRepository:
         return fresh, keys
 
     def save(self, token, request_id, request, response, model, elapsed_ms, consent_version=2):
+        return self.save_owner(self.owner(token), request_id, request, response, model, elapsed_ms, consent_version)
+
+    def save_owner(self, owner, request_id, request, response, model, elapsed_ms, consent_version=2):
         with LOCK:
             rows, keys = self._fresh()
-            owner = self.owner(token)
             if owner in keys:
                 return 'revoked'
             if any(r[0] == request_id and r[10] == owner for r in rows):
@@ -135,12 +137,14 @@ class SheetsCollectionRepository:
             self._batch([append(self.ids[DATA], row), self._stats_request(rows + [row])])
             return 'saved'
 
-    def delete(self, token):
+    def delete(self, token, *, pending=False):
         with LOCK:
             rows, keys = self._fresh()
             owner = self.owner(token)
             indexes = [i for i, r in enumerate(rows) if r[10] == owner]
             requests = self._delete_rows(indexes)
+            if not indexes and not pending:
+                return 0
             if owner not in keys:
                 requests += [append(self.ids[KEYS], [owner])]
             requests += [self._stats_request([r for r in rows if r[10] != owner])]

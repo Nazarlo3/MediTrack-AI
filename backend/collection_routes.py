@@ -23,13 +23,15 @@ def repository(service: Annotated[CollectionService, Depends(get_collection_serv
 
 
 @router.delete('/mine')
-def delete_mine(response: Response, repo=Depends(repository),
+def delete_mine(response: Response, service: Annotated[CollectionService, Depends(get_collection_service)],
                 x_collection_token: Annotated[str | None, Header()] = None):
     response.headers['Cache-Control'] = 'no-store'
     if not valid_token(x_collection_token):
         raise HTTPException(401, 'Недійсний ключ встановлення')
+    if service.repository is None:
+        raise HTTPException(503, 'Серверне збереження не налаштоване')
     try:
-        return {'deleted': repo.delete(x_collection_token)}
+        return {'deleted': service.delete(x_collection_token)}
     except Exception:
         raise HTTPException(503, 'Не вдалося видалити записи. Спробуйте пізніше.') from None
 

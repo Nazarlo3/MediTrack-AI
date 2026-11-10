@@ -21,7 +21,11 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.time.*
 
-class MedicationReminderScheduler(context: Context) {
+class MedicationReminderScheduler(
+    context: Context,
+    private val clock: () -> ZonedDateTime = { ZonedDateTime.now() },
+    private val notificationPoster: ((String, Notification) -> Unit)? = null
+) {
     private val context = context.applicationContext
     private val alarms = this.context.getSystemService(AlarmManager::class.java)
     private val notifications = this.context.getSystemService(NotificationManager::class.java)
@@ -54,7 +58,7 @@ class MedicationReminderScheduler(context: Context) {
     }
     private fun clearMetadata(key: String) {
         val editor = prefs.edit()
-        listOf("next", "delivered", "version", "snooze", "snooze_date", "posted", "posted_date").forEach { editor.remove("$it:$key") }
+        listOf("next", "delivered", "version", "snooze", "snooze_date", "posted", "posted_date", "retry_date", "retry_count").forEach { editor.remove("$it:$key") }
         check(editor.commit())
     }
     private fun retireLegacyAlarms(items: List<MedicationItem>) {
@@ -96,7 +100,7 @@ class MedicationReminderScheduler(context: Context) {
         val previous = prefs.getStringSet("keys", emptySet()).orEmpty().toSet()
         (previous - keys).forEach { cancel(it); clearMetadata(it) }
         check(prefs.edit().putStringSet("keys", keys).commit())
-        val now = ZonedDateTime.now(); val date = now.toLocalDate().toString()
+        val now = clock(); val date = now.toLocalDate().toString()
         for (item in items) for (clock in MedicationSchedule.times(item).orEmpty()) {
             val time = clock.toString(); val key = doseKey(item.id, time)
             if (prefs.getString("version:$key", null) != item.scheduleVersion) {
@@ -105,7 +109,11 @@ class MedicationReminderScheduler(context: Context) {
             }
             val occurrence = MedicationSchedule.occurrence(item, now.toLocalDate(), now.zone, clock)?.toInstant()?.toEpochMilli()
             val snoozeAt = prefs.getLong("snooze:$key", -1)
-            val snoozeValid = snoozeAt > 0 && prefs.getString("snooze_date:$key", null) == date && occurrence != null
+            val retryCount = if (prefs.getString("retry_date:$key", null) == date) prefs.getInt("retry_count:$key", 0) else 0
+            val snoozeValid = snoozeAt > 0 && prefs.getString("snooze_date:$key", null) == date && occurrence != null && retryCount <= 3
+            val retryValid = occurrence != null && prefs.getString("retry_date:$key", null) == date &&
+                retryCount in 1..3 && (snoozeValid || prefs.getString("delivered:$key", null) != date) &&
+                now.plusMinutes(1).toLocalDate() == now.toLocalDate()
             if (snoozeAt > 0 && !snoozeValid) check(prefs.edit().remove("snooze:$key").remove("snooze_date:$key").commit())
             if (item.isDoseTakenOn(time, date) || !notificationsAllowed() || (prefs.getString("posted_date:$key", null)?.let { it != date } == true)) {
                 notifications.cancel(key, 0)
@@ -117,7 +125,8 @@ class MedicationReminderScheduler(context: Context) {
                     prefs.getBoolean("schedule_error", false) || prefs.getBoolean("delivery_error", false),
                     notificationsAllowed(), old, now.toInstant().toEpochMilli(),
                     if (snoozeValid) snoozeAt else occurrence, !snoozeValid && delivered == date)) continue
-            val next = if (!notificationsAllowed()) null else if (snoozeValid) snoozeAt.coerceAtLeast(now.toInstant().toEpochMilli() + 1000)
+            val next = if (!notificationsAllowed()) null else if (retryValid) now.toInstant().toEpochMilli() + 60_000
+                else if (snoozeValid) snoozeAt.coerceAtLeast(now.toInstant().toEpochMilli() + 1000)
                 else MedicationSchedule.next(item, now, delivered, clock)?.toInstant()?.toEpochMilli()
             if (next == null) { cancel(key, notification = occurrence == null || !notificationsAllowed()); check(prefs.edit().remove("next:$key").commit()); continue }
             val pending = requireNotNull(alarmIntent(item.id, time, item.scheduleVersion))
@@ -133,28 +142,38 @@ class MedicationReminderScheduler(context: Context) {
     }
     suspend fun deliver(id: String, time: String, version: String) = lock.withLock {
         withContext(Dispatchers.IO) {
+            val key = doseKey(id, time)
             try {
                 val store = LocalDataStore(context)
                 val (_, items) = store.load(); check(!store.readError)
                 val item = items.find { it.id == id }
-                val key = doseKey(id, time); val now = ZonedDateTime.now(); val date = now.toLocalDate().toString()
+                val now = clock(); val date = now.toLocalDate().toString()
                 val at = prefs.getLong("next:$key", -1)
                 val clock = runCatching { LocalTime.parse(time) }.getOrNull()
                 val occurrence = if (item != null && clock != null) MedicationSchedule.occurrence(item, now.toLocalDate(), now.zone, clock) else null
                 val snoozed = prefs.getLong("snooze:$key", -1) > 0 && prefs.getString("snooze_date:$key", null) == date
+                val retrying = prefs.getString("retry_date:$key", null) == date && prefs.getInt("retry_count:$key", 0) in 1..3
                 val expected = if (snoozed) prefs.getLong("snooze:$key", -1) else occurrence?.toInstant()?.toEpochMilli()
                 if (item != null && item.scheduleVersion == version && occurrence != null && at > 0 &&
-                    (at == expected || snoozed && at >= requireNotNull(expected)) && at <= now.toInstant().toEpochMilli() &&
+                    (at == expected || (snoozed || retrying) && expected != null && at >= expected) && at <= now.toInstant().toEpochMilli() &&
                     (snoozed || prefs.getString("delivered:$key", null) != date) && notificationsAllowed()) {
                     val token = "$version|$date|$at"
-                    check(prefs.edit().putString("delivered:$key", date).putString("posted:$key", token)
-                        .putString("posted_date:$key", date).remove("next:$key").remove("snooze:$key").remove("snooze_date:$key").commit())
-                    postNotification(item, time, date, token)
+                    deliverReminder(post = { postNotification(item, time, date, token) }, acknowledge = {
+                        prefs.edit().putString("delivered:$key", date).putString("posted:$key", token)
+                            .putString("posted_date:$key", date).remove("next:$key").remove("snooze:$key")
+                            .remove("snooze_date:$key").remove("retry_date:$key").remove("retry_count:$key").commit()
+                    })
                     prefs.edit().remove("delivery_error").apply()
                 }
                 synchronizeLocked(false)
             } catch (e: CancellationException) { throw e }
-            catch (_: Exception) { prefs.edit().putBoolean("delivery_error", true).commit() }
+            catch (_: Exception) {
+                prefs.edit().putBoolean("delivery_error", true)
+                    .putString("retry_date:$key", clock().toLocalDate().toString())
+                    .putInt("retry_count:$key", prefs.getInt("retry_count:$key", 0) + 1).commit()
+                // Re-register only the current day's unacknowledged dose, at most three retries.
+                runCatching { synchronizeLocked(false) }
+            }
         }
     }
     private fun actionIntent(item: MedicationItem, time: String, date: String, token: String, action: String): PendingIntent =
@@ -171,10 +190,12 @@ class MedicationReminderScheduler(context: Context) {
             .setContentIntent(open).setAutoCancel(true).setPriority(NotificationCompat.PRIORITY_HIGH)
             .addAction(0, "Прийняв", actionIntent(item, time, date, token, TAKE))
         // Do not transfer a previous day's dose to a new day.
-        if (DoseActionPolicy.snoozeUntil(ZonedDateTime.now()) != null) {
+        if (DoseActionPolicy.snoozeUntil(clock()) != null) {
             notification.addAction(0, "Через 10 хв", actionIntent(item, time, date, token, SNOOZE))
         }
-        notifications.notify(doseKey(item.id, time), 0, notification.build())
+        val key = doseKey(item.id, time)
+        if (notificationPoster != null) notificationPoster.invoke(key, notification.build())
+        else notifications.notify(key, 0, notification.build())
     }
     suspend fun handleAction(id: String, time: String, date: String, version: String, token: String, action: String) = lock.withLock {
         withContext(Dispatchers.IO) {
@@ -183,7 +204,7 @@ class MedicationReminderScheduler(context: Context) {
                 val store = LocalDataStore(context)
                 val (_, items) = store.load(); check(!store.readError)
                 val item = items.find { it.id == id } ?: return@withContext
-                val now = ZonedDateTime.now(); val key = doseKey(id, time)
+                val now = clock(); val key = doseKey(id, time)
                 if (!DoseActionPolicy.isCurrent(item, time, date, version, now.toLocalDate()) || prefs.getString("posted:$key", null) != token) return@withContext
                 if (action == TAKE) {
                     var changed = false

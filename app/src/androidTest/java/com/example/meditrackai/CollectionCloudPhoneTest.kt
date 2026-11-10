@@ -49,7 +49,7 @@ class CollectionCloudPhoneTest {
                 collectionCalls++
                 id=request.collection?.requestId
                 return ApiClient.collectionApi.analyze(request,token).also {
-                    assertEquals("saved",it.headers()["X-Collection-Status"])
+                    assertTrue(it.headers()["X-Collection-Status"] in setOf("saved", "queued"))
                 }
             }
             override suspend fun deleteMine(token: String) = ApiClient.collectionApi.deleteMine(token)

@@ -1,0 +1,21 @@
+{
+  "backend_tests": {"tests": 68, "failures": 0, "errors": 0},
+  "google_transport_in_tests": "synthetic; new backend not deployed",
+  "unrelated_files_hash_checked": 29,
+  "unrelated_files_changed": 0,
+  "task_files_secret_pattern_scan": 39,
+  "secret_pattern_findings": 0,
+  "diff_check": "passed",
+  "phone_tests_passed": true,
+  "phone_tests_skipped": 0,
+  "user_preferences_unchanged_install": true,
+  "user_preferences_unchanged_tests": true,
+  "android_unit": {
+    "tests": 69,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "lint": "0 errors, 47 warnings",
+  "main_activity_started": true
+}

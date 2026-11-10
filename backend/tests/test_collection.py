@@ -21,6 +21,7 @@ from main import app
 
 class CollectionTests(unittest.TestCase):
     def setUp(self):
+        app.state.api_protection.reset_window()
         self.temp = tempfile.TemporaryDirectory()
         self.repo = CollectionRepository(str(Path(self.temp.name)/'data.sqlite3'))
         self.service = CollectionService(self.repo, 'synthetic-model')

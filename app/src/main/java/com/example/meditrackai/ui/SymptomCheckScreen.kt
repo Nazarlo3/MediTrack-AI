@@ -31,19 +31,6 @@ fun SymptomCheckScreen(
     collectionSettings: com.example.meditrackai.data.DataCollectionSettings? = null
 ) {
     var showSettings by rememberSaveable { mutableStateOf(false) }
-    if (showSettings) {
-        AlertDialog(onDismissRequest = { showSettings = false }, title = { Text("Налаштування") },
-            text = { Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text("Тема застосунку", style = MaterialTheme.typography.titleSmall)
-                com.example.meditrackai.data.ThemeMode.entries.forEach { mode ->
-                    Row(Modifier.fillMaxWidth().clickable { onThemeChange(mode) }, verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(selected = themeMode == mode, onClick = { onThemeChange(mode) })
-                        Text(mode.label)
-                    }
-                }
-                if (collectionSettings != null) DataCollectionSettingsSection(collectionSettings)
-            } }, confirmButton = { TextButton(onClick = { showSettings = false }) { Text("Готово") } })
-    }
     val context = LocalContext.current
     DisposableEffect(context) {
         val lifecycle = (context as? androidx.lifecycle.LifecycleOwner)?.lifecycle
@@ -79,6 +66,12 @@ fun SymptomCheckScreen(
     }
     var headerTapCount by remember { mutableIntStateOf(0) }
     var lastHeaderTapTime by remember { mutableLongStateOf(0L) }
+
+    if (showSettings) {
+        AppSettingsScreen(themeMode, onThemeChange, collectionSettings, medications.size, history.size,
+            storageError, onBack = { showSettings = false })
+        return
+    }
 
     if (showDebugMenu && isDebuggable) {
         DebugMenu(

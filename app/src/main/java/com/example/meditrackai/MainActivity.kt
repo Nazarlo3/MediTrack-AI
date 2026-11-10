@@ -18,7 +18,6 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import com.example.meditrackai.ui.SymptomCheckScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.meditrackai.di.SymptomDependencies
 import com.example.meditrackai.ui.SymptomViewModel
 import com.example.meditrackai.ui.theme.MediTrackAITheme
 
@@ -27,7 +26,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val dependencies = remember { SymptomDependencies(application) }
+            val dependencies = (application as MediTrackApplication).dependencies
             val symptomViewModel: SymptomViewModel = viewModel(factory = dependencies.viewModelFactory)
             val settings = remember { ThemeSettings(applicationContext) }
             val mode by settings.mode.collectAsState()

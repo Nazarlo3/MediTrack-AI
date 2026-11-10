@@ -66,6 +66,18 @@ class CollectionSettingsTest {
         assertFalse(settings.choice.value.enabled)
     }
 
+    @Test fun recreatedSettingsDisableRetainedRepositoryImmediately() = runBlocking {
+        val retained = DataCollectionSettings(context)
+        val token = retained.tokenForCollection()
+        val recreated = DataCollectionSettings(context)
+        assertTrue(recreated.choose(false))
+        assertNull(retained.tokenForCollection())
+        assertTrue(recreated.choose(true))
+        assertEquals(token, retained.tokenForCollection())
+        assertTrue(retained.choose(false))
+        assertNull(recreated.tokenForCollection())
+    }
+
     private class FakeApi : CollectionApi {
         var fail = false
         var calls = 0

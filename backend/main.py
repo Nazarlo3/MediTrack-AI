@@ -19,6 +19,7 @@ from models import SymptomRequest, SymptomResponse
 from request_context import RequestContextMiddleware, current_request_id
 from config import get_settings
 from collection_repository import CollectionRepository
+from api_protection import ApiProtection, ApiProtectionMiddleware
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("meditrack.api")
@@ -43,14 +44,19 @@ async def lifespan(app):
         task.cancel()
         with suppress(asyncio.CancelledError):
             await task
+        collection = get_collection_service(get_settings())
+        if collection.dispatcher is not None:
+            await asyncio.to_thread(collection.dispatcher.close)
 
 
 app = FastAPI(
     title="MediTrack AI backend",
     description="Мінімальний backend для категоризації неідентифікаційного опису симптомів.",
-    version="0.1.0",
+    version="0.5.1",
     lifespan=lifespan,
 )
+app.state.api_protection = ApiProtection()
+app.add_middleware(ApiProtectionMiddleware, guard=app.state.api_protection)
 app.add_middleware(RequestContextMiddleware)
 app.include_router(collection_router)
 
@@ -66,9 +72,13 @@ def analyze_symptom(request: SymptomRequest, response: Response,
                     collection: Annotated[CollectionService, Depends(get_collection_service)],
                     x_collection_token: Annotated[str | None, Header()] = None):
     started = perf_counter()
-    result = SymptomResponse.from_domain(service.analyze(request.to_domain()))
-    response.headers['X-Collection-Status'] = collection.record(
-        request.collection, x_collection_token, request, result, (perf_counter()-started)*1000)
+    ticket = collection.begin(request.collection, x_collection_token)
+    try:
+        result = SymptomResponse.from_domain(service.analyze(request.to_domain()))
+        response.headers['X-Collection-Status'] = collection.record(
+            request.collection, x_collection_token, request, result, (perf_counter()-started)*1000)
+    finally:
+        collection.end(ticket)
     response.headers['Cache-Control'] = 'no-store'
     return result
 

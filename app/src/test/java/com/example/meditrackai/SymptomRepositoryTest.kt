@@ -35,7 +35,7 @@ class SymptomRepositoryTest {
     }
 
     @Test fun classifiesHttpAndNetworkErrors() = runBlocking {
-        listOf(400 to SymptomError.INVALID_INPUT, 422 to SymptomError.INVALID_INPUT, 500 to SymptomError.SERVER).forEach { (code, expected) ->
+        listOf(400 to SymptomError.INVALID_INPUT, 422 to SymptomError.INVALID_INPUT, 429 to SymptomError.RATE_LIMIT, 500 to SymptomError.SERVER).forEach { (code, expected) ->
             response = { Response.error(code, "{}".toResponseBody()) }
             assertEquals(expected, failure { repository.analyze(SymptomInput("Опис")) })
         }
