@@ -1,0 +1,27 @@
+{
+  "published": true,
+  "url": "https://github.com/Nazarlo3/MediTrack-AI/releases/tag/v0.5.1",
+  "tag": "v0.5.1",
+  "sourceCommit": "dc1812c7cb52f253f06921283025754e67578b36",
+  "publicDownloadVerified": true,
+  "assets": [
+    {
+      "name": "BUILD-INFO.json",
+      "size": 578,
+      "url": "https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.5.1/BUILD-INFO.json",
+      "digest": "sha256:ce3471add00be70ef993a6c5a8a56f7e480938a26b26596917c16fb6456fae99"
+    },
+    {
+      "name": "MediTrackAI-0.5.1-release.apk",
+      "size": 2834725,
+      "url": "https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.5.1/MediTrackAI-0.5.1-release.apk",
+      "digest": "sha256:7dfc30c38ddcb3514219dc9b2f2c5bbf80e7dc67e0dce69274e7bbf2ce3dfabc"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "size": 97,
+      "url": "https://github.com/Nazarlo3/MediTrack-AI/releases/download/v0.5.1/SHA256SUMS.txt",
+      "digest": "sha256:7b353a04b227c045c1e45ebea3cf93ed7ef5fbfefb3903e04ef57a89ffdbf80e"
+    }
+  ]
+}
