@@ -1,0 +1,32 @@
+{
+  "additional_medication_viewmodel_phone": {"tests": 1, "passed": true, "skipped": 0, "user_preferences_unchanged": true},
+  "total_phone_tests_passed": 16,
+  "android_unit": {
+    "tests": 71,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "lint": "0 errors, 49 warnings",
+  "build": "passed",
+  "test_apk": "compiled",
+  "ci_yaml": "validated; GitHub run pending",
+  "unrelated_files_unchanged": 28,
+  "lab5_user_changes_preserved_except_constructor": true,
+  "phone_available": true,
+  "phone_verification": {
+    "phone_tests_passed": true,
+    "phone_test_count": 15,
+    "phone_tests_skipped": 0,
+    "user_preferences_unchanged_install": true,
+    "user_preferences_unchanged_tests": true,
+    "android_unit": {
+      "tests": 71,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "lint": "0 errors, 49 warnings",
+    "main_activity_started": true
+  }
+}

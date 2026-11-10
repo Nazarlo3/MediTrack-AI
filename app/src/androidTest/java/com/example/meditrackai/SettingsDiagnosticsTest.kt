@@ -32,20 +32,26 @@ class SettingsDiagnosticsTest {
         try {
             assertNotNull(runBlocking { retained.tokenForCollection() })
             compose.setContent {
-                MaterialTheme { AppSettingsScreen(ThemeMode.SYSTEM, {}, recreated, 0, 0, null, { closed = true }) }
+                MaterialTheme { AppSettingsScreen(ThemeMode.SYSTEM, {}, recreated, 0, 0, null, { closed = true },
+                    androidx.lifecycle.viewmodel.compose.viewModel(factory =
+                        (base as MediTrackApplication).dependencies.settingsViewModelFactory)) }
             }
             compose.onNode(isToggleable()).performScrollTo().performClick()
             compose.waitUntil(5000) { !recreated.choice.value.enabled }
             assertNull(runBlocking { retained.tokenForCollection() })
             compose.onNodeWithText("Докладніше про покращення AI").performScrollTo().performClick()
             compose.onNodeWithText("Для покращення AI та статистики", substring = true).assertExists()
+            compose.onNodeWithText("Про застосунок").performScrollTo().performClick()
             compose.waitUntil(5000) {
                 compose.onAllNodesWithText("MediTrack AI ${BuildConfig.VERSION_NAME}", substring = true)
                     .fetchSemanticsNodes().isNotEmpty()
             }
+            compose.onNodeWithText("Проєкт на GitHub").assertExists()
+            compose.onNodeWithText("Назад").performScrollTo().performClick()
+            compose.onNodeWithText("Діагностика").performScrollTo().performClick()
             compose.onNodeWithText("Копіювати діагностику").performScrollTo().performClick()
             compose.onNodeWithText("Діагностику скопійовано.").performScrollTo().assertIsDisplayed()
-            compose.onNodeWithText("Проєкт на GitHub").assertExists()
+            compose.onNodeWithText("Назад").performScrollTo().performClick()
             compose.onNodeWithText("Готово").performScrollTo().performClick()
             compose.runOnIdle { assertTrue(closed) }
         } finally {

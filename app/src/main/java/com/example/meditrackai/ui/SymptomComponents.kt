@@ -1,0 +1,202 @@
+package com.example.meditrackai.ui
+
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
+import android.content.pm.ApplicationInfo
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import com.example.meditrackai.ui.theme.*
+
+@Composable
+internal fun SymptomInputSection(
+    uiState: SymptomUiState,
+    onCheckSymptom: (String, Int?, Int?) -> Unit
+) {
+    var inputText by rememberSaveable { mutableStateOf("") }
+    var durationText by rememberSaveable { mutableStateOf("") }
+    var showDetails by rememberSaveable { mutableStateOf(false) }
+    var intensityText by rememberSaveable { mutableStateOf("") }
+    val duration = durationText.trim().toIntOrNull()
+    val intensity = intensityText.trim().toIntOrNull()
+    val invalidDuration = durationText.isNotBlank() && (duration == null || duration !in 1..30)
+    val invalidIntensity = intensityText.isNotBlank() && (intensity == null || intensity !in 0..10)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Що вас турбує? Опишіть симптоми своїми словами.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = inputText,
+                onValueChange = { inputText = it },
+                label = { Text("Опис симптому") },
+                placeholder = { Text("Наприклад: болить голова і трохи нудить") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 4,
+                enabled = uiState !is SymptomUiState.Loading,
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+            TextButton(onClick = { showDetails = !showDetails }) {
+                Text(androidx.compose.ui.res.stringResource(if (showDetails) com.example.meditrackai.R.string.hide_details else com.example.meditrackai.R.string.optional_details))
+            }
+            if (showDetails || invalidDuration || invalidIntensity) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(value = durationText, onValueChange = { durationText = it },
+                    label = { Text("Тривалість, днів") }, singleLine = true,
+                    supportingText = { Text("Ціле число 1–30") }, isError = invalidDuration,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    enabled = uiState !is SymptomUiState.Loading, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = intensityText, onValueChange = { intensityText = it },
+                    label = { Text("Інтенсивність") }, singleLine = true,
+                    supportingText = { Text("Самооцінка 0–10") }, isError = invalidIntensity,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    enabled = uiState !is SymptomUiState.Loading, modifier = Modifier.fillMaxWidth())
+            }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = { onCheckSymptom(inputText, duration, intensity) },
+                enabled = uiState !is SymptomUiState.Loading && !invalidDuration && !invalidIntensity,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = if (uiState is SymptomUiState.Loading) "Перевіряємо..." else "Перевірити",
+                    style = MaterialTheme.typography.titleSmall
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun SuccessCard(
+    category: String,
+    explanation: String,
+    urgency: String?,
+    disclaimer: String
+) {
+    val isDark = LocalAppDarkTheme.current
+    val safeUrgency = (urgency ?: "звичайне").lowercase()
+
+    val (badgeText, badgeBgColor, badgeTextColor) = remember(safeUrgency, isDark) {
+        when {
+            safeUrgency.contains("терміново") -> Triple(
+                "Терміново: Потрібна допомога",
+                if (isDark) UrgencyUrgentBgDark else UrgencyUrgentBgLight,
+                if (isDark) UrgencyUrgentTextDark else UrgencyUrgentTextLight
+            )
+            safeUrgency.contains("увага") -> Triple(
+                "Увага: Консультація ближчим часом",
+                if (isDark) UrgencyWarningBgDark else UrgencyWarningBgLight,
+                if (isDark) UrgencyWarningTextDark else UrgencyWarningTextLight
+            )
+            else -> Triple(
+                "Стан: Плановий / Звичайний",
+                if (isDark) UrgencyNormalBgDark else UrgencyNormalBgLight,
+                if (isDark) UrgencyNormalTextDark else UrgencyNormalTextLight
+            )
+        }
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Категорія: $category",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Box(
+                modifier = Modifier
+                    .background(badgeBgColor, shape = RoundedCornerShape(8.dp))
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = badgeText,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = badgeTextColor,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = explanation,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = disclaimer,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+    }
+}
+
+@Composable
+internal fun ErrorCard(message: String, onRetry: (() -> Unit)?) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            if (onRetry != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Button(
+                    onClick = onRetry,
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                    modifier = Modifier.height(48.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Спробувати ще раз", style = MaterialTheme.typography.titleSmall)
+                }
+            }
+        }
+    }
+}

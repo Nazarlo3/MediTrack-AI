@@ -66,7 +66,7 @@ class Lab5PhoneScenarioTest {
         val repository = DefaultSymptomRepository(api, SharedPreferencesSymptomHistorySource(store))
         try {
             instrumentation.runOnMainSync {
-                vm = SymptomViewModel(application, store, repository, AnalyzeSymptomUseCase(repository))
+                vm = SymptomViewModel(com.example.meditrackai.di.createMedicationRepository(application, store), repository, AnalyzeSymptomUseCase(repository))
                 viewModels.put("lab5", vm)
             }
             compose.setContent {

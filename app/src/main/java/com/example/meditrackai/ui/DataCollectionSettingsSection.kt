@@ -1,5 +1,7 @@
 package com.example.meditrackai.ui
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,13 +17,11 @@ private const val NOTICE = "Для покращення AI та статисти
 
 @Composable
 fun DataCollectionSettingsSection(settings: DataCollectionSettings) {
-    val choice by settings.choice.collectAsState()
-    val status by settings.status.collectAsState()
+    val choice by settings.choice.collectAsStateWithLifecycle()
+    val status by settings.status.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var busy by remember { mutableStateOf(false) }
     var expanded by rememberSaveable { mutableStateOf(false) }
-    HorizontalDivider(Modifier.padding(vertical = 12.dp))
-    Text("Покращення AI", style = MaterialTheme.typography.titleSmall)
     Row {
         Text("Допомагати покращувати AI", Modifier.weight(1f))
         Switch(checked = choice.enabled, enabled = !busy, onCheckedChange = { enabled ->

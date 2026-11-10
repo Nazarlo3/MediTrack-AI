@@ -1,3 +1,31 @@
 <resources>
     <string name="app_name">MediTrack AI</string>
+    <string name="tab_analysis">Аналіз AI</string>
+    <string name="my_medications">Мої ліки</string>
+    <string name="history_title">Історія</string>
+    <string name="add_medication">Додати препарат</string>
+    <string name="back_to_medications">До списку ліків</string>
+    <string name="back">Назад</string>
+    <string name="about_app">Про застосунок</string>
+    <string name="diagnostics_title">Діагностика</string>
+    <string name="optional_details">Додаткові дані</string>
+    <string name="hide_details">Сховати додаткові дані</string>
+    <string name="empty_medications_title">Ваш графік починається тут</string>
+    <string name="empty_medications_body">Додайте препарат і час прийому — ми нагадаємо про нього.</string>
+    <string name="tab_medications">Мої ліки (%1$d)</string>
+    <string name="settings_title">Налаштування</string>
+    <string name="done">Готово</string>
+    <string name="theme_title">Тема застосунку</string>
+    <string name="collection_title">Покращення AI</string>
+    <string name="about_diagnostics">Про застосунок і діагностика</string>
+    <string name="last_api_request">Останній AI-запит: %1$s</string>
+    <string name="no_session_request">немає в цій сесії</string>
+    <string name="checking">Перевіряємо…</string>
+    <string name="check_backend">Перевірити backend</string>
+    <string name="refresh_diagnostics">Оновити діагностику</string>
+    <string name="copy_diagnostics">Копіювати діагностику</string>
+    <string name="diagnostics_copied">Діагностику скопійовано.</string>
+    <string name="github_project">Проєкт на GitHub</string>
+    <string name="browser_unavailable">Не знайдено браузер для відкриття GitHub.</string>
+    <string name="diagnostics_notice">Містить технічні дані пристрою й застосунку. Тексти звернень, відповіді AI та ключі не копіюються.</string>
 </resources>

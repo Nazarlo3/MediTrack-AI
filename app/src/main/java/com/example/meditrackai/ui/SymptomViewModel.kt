@@ -1,13 +1,11 @@
 package com.example.meditrackai.ui
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.meditrackai.data.LocalDataStore
+import com.example.meditrackai.domain.medications.MedicationRepository
 import com.example.meditrackai.domain.symptoms.AnalyzeSymptomUseCase
 import com.example.meditrackai.domain.symptoms.SymptomRepository
 import com.example.meditrackai.network.MedicationItem
-import com.example.meditrackai.reminders.MedicationReminderScheduler
 import com.example.meditrackai.validation.FormValidators
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,11 +14,10 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 class SymptomViewModel(
-    application: Application,
-    private val store: LocalDataStore,
+    private val medications: MedicationRepository,
     repository: SymptomRepository,
     analyze: AnalyzeSymptomUseCase
-) : AndroidViewModel(application) {
+) : ViewModel() {
     private val initialized = CompletableDeferred<Unit>()
     private val _medicationsState = MutableStateFlow<List<MedicationItem>>(emptyList())
     val medicationsState: StateFlow<List<MedicationItem>> = _medicationsState
@@ -37,11 +34,11 @@ class SymptomViewModel(
     init {
         viewModelScope.launch {
             try {
-                val (_, medications) = store.load()
-                _medicationsState.value = medications
-                if (store.readError) _storageError.value = "Не вдалося прочитати локальні дані. Збереження призупинено, щоб не втратити записи."
-                if (!store.readError) MedicationReminderScheduler(getApplication()).synchronize()
-            } finally {
+                _medicationsState.value = medications.load()
+                medications.synchronize()
+            } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+            catch (_: Exception) { _storageError.value = "Не вдалося прочитати ліки. Оригінальні записи збережено." }
+            finally {
                 initialized.complete(Unit)
             }
         }
@@ -52,11 +49,11 @@ class SymptomViewModel(
         val times = FormValidators.parseTimes(mealSlot.substringBefore(" (")) ?: return false
         val item = MedicationItem(name = name.trim(), dosage = dosage.trim(), photoUri = photoUri,
             daysOfWeek = daysOfWeek, mealSlot = mealSlot, endDate = endDate, times = times, takenDoseDates = emptyMap())
-        val updated = store.updateMedications { listOf(item) + it }
+        val updated = medications.update { listOf(item) + it }
         if (updated == null) { _storageError.value = "Не вдалося зберегти препарат."; return false }
         _medicationsState.value = updated
         _storageError.value = null
-        MedicationReminderScheduler(getApplication()).synchronize()
+        medications.synchronize()
         return true
     }
 
@@ -67,7 +64,7 @@ class SymptomViewModel(
             edited.daysOfWeek.joinToString(","), edited.endDate)
         if (error != null) { _storageError.value = error; return false }
         var original: MedicationItem? = null
-        val updated = store.updateMedications { items -> items.map { old ->
+        val updated = medications.update { items -> items.map { old ->
             if (old.id != edited.id) old else {
                 original = old
                 old.copy(name = edited.name.trim(), dosage = edited.dosage.trim(), photoUri = edited.photoUri,
@@ -82,8 +79,8 @@ class SymptomViewModel(
         }
         _medicationsState.value = updated
         _storageError.value = null
-        if (original?.photoUri != edited.photoUri) PhotoStorage.deletePhotoFromInternalStorage(getApplication(), original?.photoUri)
-        MedicationReminderScheduler(getApplication()).synchronize()
+        if (original?.photoUri != edited.photoUri) medications.deletePhoto(original?.photoUri)
+        medications.synchronize()
         return true
     }
 
@@ -91,7 +88,7 @@ class SymptomViewModel(
         viewModelScope.launch {
             initialized.await()
             val today = LocalDate.now().toString()
-            val updated = store.updateMedications { items -> items.map { item ->
+            val updated = medications.update { items -> items.map { item ->
                 if (item.id != id || clock !in item.times.orEmpty()) item else {
                     val dates = item.takenDoseDates.orEmpty().toMutableMap()
                     if (item.isDoseTakenOn(clock, today)) dates.remove(clock) else dates[clock] = today
@@ -101,7 +98,7 @@ class SymptomViewModel(
             if (updated == null) _storageError.value = "Не вдалося зберегти статус прийому."
             else {
                 _medicationsState.value = updated; _storageError.value = null
-                MedicationReminderScheduler(getApplication()).synchronize()
+                medications.synchronize()
             }
         }
     }
@@ -109,9 +106,9 @@ class SymptomViewModel(
     fun refreshMedications() {
         viewModelScope.launch {
             initialized.await()
-            val (_, items) = store.load()
-            if (!store.readError) _medicationsState.value = items
-            else _storageError.value = "Не вдалося прочитати локальні дані."
+            try { _medicationsState.value = medications.load(); _storageError.value = null }
+            catch (e: kotlinx.coroutines.CancellationException) { throw e }
+            catch (_: Exception) { _storageError.value = "Не вдалося прочитати ліки. Оригінальні записи збережено." }
         }
     }
 
@@ -119,13 +116,13 @@ class SymptomViewModel(
         viewModelScope.launch {
             initialized.await()
             val photo = _medicationsState.value.find { it.id == id }?.photoUri
-            val updated = store.updateMedications { items -> items.filter { it.id != id } }
+            val updated = medications.update { items -> items.filter { it.id != id } }
             if (updated == null) _storageError.value = "Не вдалося видалити препарат."
             else {
                 _medicationsState.value = updated
                 _storageError.value = null
-                PhotoStorage.deletePhotoFromInternalStorage(getApplication(), photo)
-                MedicationReminderScheduler(getApplication()).synchronize()
+                medications.deletePhoto(photo)
+                medications.synchronize()
             }
         }
     }

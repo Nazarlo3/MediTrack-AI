@@ -1,0 +1,47 @@
+{
+  "repository": "https://github.com/android/skills",
+  "revision": "5815d27fda564aa9f07ebdcb5e57ed3e8d904e0d",
+  "installed_date": "2026-11-10",
+  "scope": "project-only",
+  "upstream_modified": false,
+  "skills": [
+    {
+      "name": "jetpack-compose-performance",
+      "upstream_path": "jetpack-compose/jetpack-compose-performance",
+      "source": "https://github.com/android/skills/tree/5815d27fda564aa9f07ebdcb5e57ed3e8d904e0d/jetpack-compose/jetpack-compose-performance",
+      "license": "Apache-2.0",
+      "files": {
+        "LICENSE.txt": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+        "references/android/develop/ui/compose/custom-modifiers.md": "b4ede8f37dc56c54f3621a5ad21f91a649450a9854bc1bacc1a24eb65fe31b38",
+        "references/android/develop/ui/compose/performance/backwards-write.md": "e9b5b1afa36dca37f9548a8d706cc8474b3f03e61bc77037dfa6ab7b1a2169b7",
+        "references/android/develop/ui/compose/performance/stability/strongskipping.md": "3a69e68553d6d628e8787b3e499766798e73d86779a149c800fff7bb4340cce4",
+        "references/animation.md": "fe21a3bc55b85b807e3655f427f00e3898a7a0da0590a9fe2825a20d43e440fe",
+        "references/effects-and-threading.md": "4a612526c8e9d28d26fb51b1d942d1b34a1fa2316dfe43d2869206dda49bbfa3",
+        "references/graphics-performance.md": "3dc5881c2fb8eb4bcbf59b410008d995321a5fd2583e98194ee42407bdb7d266",
+        "references/layouts.md": "619da0bd169a2a2c1b7e99868ab358a3be8c06f25f2bef0dd15353670ce12c06",
+        "references/lazy-layouts.md": "68a0a4f43d311e4d57238ce745d0de775b1948748ab462608d5cbfe8f07b9bfe",
+        "references/state-and-stability.md": "46aff96f166d19d1b2f5510c35679a0efac4fe9f578b4a1e186f5017a696ba37",
+        "SKILL.md": "a1680a1ae079faa47fc706bf034b88d4c4c4903dfa4187e98e0af8b056e1848b"
+      }
+    },
+    {
+      "name": "android-permissions-security",
+      "upstream_path": "security/android-permissions-security",
+      "source": "https://github.com/android/skills/tree/5815d27fda564aa9f07ebdcb5e57ed3e8d904e0d/security/android-permissions-security",
+      "license": "Apache-2.0",
+      "files": {
+        "LICENSE.txt": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+        "references/android/guide/topics/manifest/permission-element.md": "06e8c6e6eee6c53ed26db9599e5d461ccadcd2e54c785e7eabaf676cb5a16587",
+        "references/android/guide/topics/permissions/overview.md": "95e34ec29d120e352814c905f574175ceb30f1ffe062e7ea8eddb36852b9419a",
+        "references/android/privacy-and-security/risks/sender-of-pending-intents.md": "74adeb0c724b5c43a45de8953698707a8034a81238bb1c91d27684e1f262f2bb",
+        "references/android/training/permissions/requesting.md": "cec4c45adaa81e9f819fdb51f0d5b4c747493fa48682e67e20cff9bb7751fef8",
+        "SKILL.md": "d6e9b1f12728336b15e82daee9f3f8d050dbd792d8e5d52227fd1972e92a12e3"
+      }
+    }
+  ],
+  "local_adaptation": {
+    "name": "meditrack-android",
+    "official": false,
+    "path": ".agents/skills/meditrack-android/SKILL.md"
+  }
+}

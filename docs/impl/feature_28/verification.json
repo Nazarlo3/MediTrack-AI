@@ -1,0 +1,46 @@
+{
+  "phone": {
+    "RedesignUiTest": {
+      "phone_tests_passed": true,
+      "phone_test_count": 1,
+      "phone_tests_skipped": 0,
+      "user_preferences_unchanged_install": true,
+      "user_preferences_unchanged_tests": true,
+      "android_unit": {
+        "tests": 71,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "lint": "0 errors, 52 warnings",
+      "main_activity_started": true
+    },
+    "SettingsDiagnosticsTest": {
+      "phone_tests_passed": true,
+      "phone_test_count": 1,
+      "phone_tests_skipped": 0,
+      "user_preferences_unchanged_install": true,
+      "user_preferences_unchanged_tests": true,
+      "android_unit": {
+        "tests": 71,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "lint": "0 errors, 52 warnings",
+      "main_activity_started": true
+    }
+  },
+  "build": "passed",
+  "lint": {
+    "errors": 0,
+    "warnings": 52
+  },
+  "visual_screens_reviewed": 7,
+  "unit_tests_rerun": false,
+  "unrelated_changes_preserved": true,
+  "diff_check": "passed",
+  "version_changed": false,
+  "backend_changed": false,
+  "commit_push_deploy": false
+}

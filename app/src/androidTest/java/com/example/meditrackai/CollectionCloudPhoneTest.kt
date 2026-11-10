@@ -64,7 +64,7 @@ class CollectionCloudPhoneTest {
         lateinit var vm: SymptomViewModel
         try {
             instrumentation.runOnMainSync {
-                vm=SymptomViewModel(app,store,repository,AnalyzeSymptomUseCase(repository)); models.put("cloud",vm)
+                vm=SymptomViewModel(com.example.meditrackai.di.createMedicationRepository(app,store),repository,AnalyzeSymptomUseCase(repository)); models.put("cloud",vm)
             }
             token=runBlocking { settings.tokenForCollection() }
             compose.setContent { MaterialTheme { SymptomCheckScreen(vm,collectionSettings=settings) } }

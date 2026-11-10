@@ -1,5 +1,17 @@
 # Архітектура MediTrack AI
 
+UI feature_28: MediTrackShell керує компактною оболонкою й трьома вкладками (ліки/AI/історія). MedicationSection відкриває додавання окремим saveable станом; MedicationTodaySummary показує обчислений прогрес/наступний час за графіком, оновлюється у foreground. AppSettingsScreen має підрозділи About/Diagnostics; поточні репозиторії та ViewModel не змінено. [UI-специфікація](ui-design.md), [перевірки](impl/feature_28/changelog.md).
+
+## Поточне впорядкування клієнта: feature_27
+
+`SymptomViewModel` тепер звичайна ViewModel: аналіз використовує чинний SymptomRepository/use case, ліки — MedicationRepository. `DefaultMedicationRepository` обгортає LocalDataStore та ін'єктовані функції синхронізації нагадувань/видалення фото; Android-залежності створюються в di/MedicationDependencies.kt, а не у ViewModel. Наявний DTO MedicationItem і JSON лишаються сумісними.
+
+`SettingsViewModel` → SettingsRepository/AndroidSettingsRepository → DiagnosticsApi/AppDiagnostics. Route AppSettingsScreen збирає стан із lifecycle та обробляє UI-дії clipboard/browser; content отримує стан/callbacks, мережевих викликів там немає. Фактичний збір даних залишається в DataCollectionSettings із його чинним протоколом. MainActivity передає обидві ViewModel зі спільного ручного DI.
+
+AppPage/SectionCard задають спільну оболонку/секції. Форму, картку й фото ліків винесено в MedicationForm.kt/MedicationCard.kt/MedicationPhoto.kt; компоненти аналізу — SymptomComponents.kt. Основні екрани використовують collectAsStateWithLifecycle та LifecycleResumeEffect. LocalDataStore має незалежні historyReadError/medicationsReadError; readError збережено як агрегат сумісності. Після явного ремонту даних повторне load оновлює помилки; автоматичного стирання пошкодженого JSON немає. Планувальник перевіряє лише сховище ліків.
+
+Версія/API, схема JSON та політика медичних даних не змінені. Process-death persistence, Room/Hilt/Navigation, CI instrumented device й повний редизайн не впроваджуються цим етапом. Перевірки — [feature_27](impl/feature_27/changelog.md); попередні описи нижче історичні.
+
 0.5.1: `collection_outbox.py` замінює попередню RAM-чергу приватним SQLite outbox за `COLLECTION_OUTBOX_PATH`; commit до queued, ack після Google, відновлення/дедуплікація/відкликання, TTL 24 години. Без постійного сховища — синхронний Google-запис із фактичним saved/unavailable. JSON аналізу сумісний. Виявлено free Render без диска; постійність там не припускається. [Режими й обмеження](data-collection.md).
 
 ## Поточні локальні зміни feature_25

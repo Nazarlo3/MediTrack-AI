@@ -16,11 +16,19 @@ class SymptomDependencies(application: Application) {
     private val store = LocalDataStore(application)
     private val repository = DefaultSymptomRepository(ApiClient.api, SharedPreferencesSymptomHistorySource(store),
         collectionSettings, ApiClient.collectionApi)
+    val settingsViewModelFactory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            require(modelClass == com.example.meditrackai.ui.SettingsViewModel::class.java)
+            @Suppress("UNCHECKED_CAST")
+            return com.example.meditrackai.ui.SettingsViewModel(
+                com.example.meditrackai.data.settings.AndroidSettingsRepository(application, ApiClient.diagnosticsApi)) as T
+        }
+    }
     val viewModelFactory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass == SymptomViewModel::class.java)
             @Suppress("UNCHECKED_CAST")
-            return SymptomViewModel(application, store, repository, AnalyzeSymptomUseCase(repository)) as T
+            return SymptomViewModel(createMedicationRepository(application, store), repository, AnalyzeSymptomUseCase(repository)) as T
         }
     }
 }

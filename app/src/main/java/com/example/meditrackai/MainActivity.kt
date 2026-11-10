@@ -1,5 +1,7 @@
 package com.example.meditrackai
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -28,8 +30,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             val dependencies = (application as MediTrackApplication).dependencies
             val symptomViewModel: SymptomViewModel = viewModel(factory = dependencies.viewModelFactory)
+            val settingsViewModel: com.example.meditrackai.ui.SettingsViewModel = viewModel(factory = dependencies.settingsViewModelFactory)
             val settings = remember { ThemeSettings(applicationContext) }
-            val mode by settings.mode.collectAsState()
+            val mode by settings.mode.collectAsStateWithLifecycle()
             val scope = rememberCoroutineScope()
             val snackbar = remember { SnackbarHostState() }
             val dark = when (mode) {
@@ -44,7 +47,7 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(innerPadding)
                     ) {
-                        SymptomCheckScreen(viewModel = symptomViewModel, themeMode = mode,
+                        SymptomCheckScreen(viewModel = symptomViewModel, themeMode = mode, settingsViewModel = settingsViewModel,
                             collectionSettings = dependencies.collectionSettings, onThemeChange = { selected ->
                             scope.launch {
                                 if (!settings.save(selected)) snackbar.showSnackbar("Не вдалося зберегти тему.")

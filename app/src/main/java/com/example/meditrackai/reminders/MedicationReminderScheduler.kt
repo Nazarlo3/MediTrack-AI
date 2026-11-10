@@ -94,7 +94,7 @@ class MedicationReminderScheduler(
     private suspend fun synchronizeLocked(reset: Boolean) {
         createChannel()
         val store = LocalDataStore(context)
-        val (_, items) = store.load(); check(!store.readError)
+        val (_, items) = store.load(); check(!store.medicationsReadError)
         retireLegacyAlarms(items)
         val keys = items.flatMap { item -> MedicationSchedule.times(item).orEmpty().map { doseKey(item.id, it.toString()) } }.toSet()
         val previous = prefs.getStringSet("keys", emptySet()).orEmpty().toSet()
@@ -145,7 +145,7 @@ class MedicationReminderScheduler(
             val key = doseKey(id, time)
             try {
                 val store = LocalDataStore(context)
-                val (_, items) = store.load(); check(!store.readError)
+                val (_, items) = store.load(); check(!store.medicationsReadError)
                 val item = items.find { it.id == id }
                 val now = clock(); val date = now.toLocalDate().toString()
                 val at = prefs.getLong("next:$key", -1)
@@ -202,7 +202,7 @@ class MedicationReminderScheduler(
             try {
                 if (action !in setOf(TAKE, SNOOZE)) return@withContext
                 val store = LocalDataStore(context)
-                val (_, items) = store.load(); check(!store.readError)
+                val (_, items) = store.load(); check(!store.medicationsReadError)
                 val item = items.find { it.id == id } ?: return@withContext
                 val now = clock(); val key = doseKey(id, time)
                 if (!DoseActionPolicy.isCurrent(item, time, date, version, now.toLocalDate()) || prefs.getString("posted:$key", null) != token) return@withContext

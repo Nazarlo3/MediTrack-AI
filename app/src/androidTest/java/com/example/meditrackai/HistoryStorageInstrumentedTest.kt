@@ -140,4 +140,39 @@ class HistoryStorageInstrumentedTest {
         assertEquals(listOf(item), store.deleteHistoryItem("not-an-existing-id"))
         assertEquals(listOf(item), LocalDataStore(context).load().first)
     }
+
+    @Test fun corruptHistoryDoesNotBlockMedicationWritesAndRetryKeepsOriginal() = runBlocking {
+        val prefs = context.getSharedPreferences("meditrack_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putString("symptom_history_v2", "broken-history").putString("medications_list_v3", "[]").commit()
+        val store = LocalDataStore(context)
+        store.load()
+        assertTrue(store.historyReadError); assertFalse(store.medicationsReadError)
+        val item = com.example.meditrackai.network.MedicationItem(name = "Synthetic", dosage = "test",
+            times = listOf("12:00"), takenDoseDates = emptyMap())
+        assertNotNull(store.updateMedications { listOf(item) })
+        assertNull(store.updateHistory { emptyList() })
+        assertEquals("broken-history", prefs.getString("symptom_history_v2", null))
+        // Simulate an explicit repair, not an automatic destructive reset.
+        prefs.edit().putString("symptom_history_v2", "[]").commit()
+        store.load()
+        assertFalse(store.historyReadError)
+        assertNotNull(store.updateHistory { emptyList() })
+        assertEquals(listOf(item), LocalDataStore(context).load().second)
+    }
+
+    @Test fun corruptMedicationsDoNotBlockHistoryAndSeparateInstancesKeepLatest() = runBlocking {
+        val prefs = context.getSharedPreferences("meditrack_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putString("symptom_history_v2", "[]").putString("medications_list_v3", "broken-medications").commit()
+        val first = LocalDataStore(context); val second = LocalDataStore(context)
+        first.load(); second.load()
+        assertFalse(first.historyReadError); assertTrue(first.medicationsReadError)
+        val a = SymptomHistoryItem("12:00", "Synthetic A", SymptomResponse("інше", "Synthetic result"), createdAt = 1000)
+        val b = a.copy(id = "separate-id", description = "Synthetic B")
+        assertNotNull(first.updateHistory { listOf(a) + it })
+        assertNotNull(second.updateHistory { listOf(b) + it })
+        val source = com.example.meditrackai.data.symptoms.SharedPreferencesSymptomHistorySource(first)
+        assertEquals(listOf(b, a), source.load())
+        assertNull(first.updateMedications { emptyList() })
+        assertEquals("broken-medications", prefs.getString("medications_list_v3", null))
+    }
 }

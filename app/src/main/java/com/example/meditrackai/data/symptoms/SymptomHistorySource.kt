@@ -17,7 +17,7 @@ interface SymptomHistorySource {
 class SharedPreferencesSymptomHistorySource(private val store: LocalDataStore) : SymptomHistorySource {
     override suspend fun load(): List<SymptomHistoryItem> {
         val items = store.load().first
-        if (store.readError) throw SymptomFailure(SymptomError.STORAGE)
+        if (store.historyReadError) throw SymptomFailure(SymptomError.STORAGE)
         return items
     }
     override suspend fun save(entry: SymptomHistoryItem) =

@@ -17,8 +17,11 @@ class LocalDataStore(context: Context, private val gson: Gson = Gson()) {
     private val medicationCodec = MedicationJsonCodec(gson)
     private var history = emptyList<SymptomHistoryItem>()
     private var medications = emptyList<MedicationItem>()
-    var readError: Boolean = false
+    var historyReadError: Boolean = false
         private set
+    var medicationsReadError: Boolean = false
+        private set
+    val readError: Boolean get() = historyReadError || medicationsReadError
 
     suspend fun load(): Pair<List<SymptomHistoryItem>, List<MedicationItem>> = mutex.withLock {
         withContext(Dispatchers.IO) {
@@ -28,6 +31,7 @@ class LocalDataStore(context: Context, private val gson: Gson = Gson()) {
             val currentMedicationJson = prefs.getString("medications_list_v3", null)
             val medicationJson = currentMedicationJson ?: prefs.getString("medications_list_v2", null)
                 ?: prefs.getString("medications_list_v1", null)
+            historyReadError = false
             history = try {
                 val decoded = historyCodec.decode(historyJson, legacy = currentHistoryJson == null)
                 if (currentHistoryJson == null && historyJson != null) {
@@ -35,14 +39,15 @@ class LocalDataStore(context: Context, private val gson: Gson = Gson()) {
                     check(prefs.edit().putString("symptom_history_v2", historyCodec.encode(decoded)).commit())
                 }
                 decoded
-            } catch (_: Exception) { readError = true; emptyList() }
+            } catch (_: Exception) { historyReadError = true; emptyList() }
+            medicationsReadError = false
             medications = try {
                 val decoded = medicationCodec.decode(medicationJson, legacy = currentMedicationJson == null)
                 if (currentMedicationJson == null && medicationJson != null) {
                     check(prefs.edit().putString("medications_list_v3", medicationCodec.encode(decoded)).commit())
                 }
                 decoded
-            } catch (_: Exception) { readError = true; emptyList() }
+            } catch (_: Exception) { medicationsReadError = true; emptyList() }
             history to medications
         }
     }
@@ -52,8 +57,11 @@ class LocalDataStore(context: Context, private val gson: Gson = Gson()) {
         change: (List<SymptomHistoryItem>) -> List<SymptomHistoryItem>
     ): List<SymptomHistoryItem>? = mutex.withLock {
         withContext(Dispatchers.IO) {
-            if (readError) return@withContext null
-            val next = historyCodec.decode(historyCodec.encode(change(history)))
+            if (historyReadError) return@withContext null
+            val current = prefs.getString("symptom_history_v2", null)
+            val latest = try { if (current == null) history else historyCodec.decode(current) }
+                catch (_: Exception) { historyReadError = true; return@withContext null }
+            val next = historyCodec.decode(historyCodec.encode(change(latest)))
             // Clear backup copies too, so a deleted history cannot reappear via fallback.
             val discardLegacy = next.isEmpty() || removeLegacyCopies
             if (discardLegacy && !legacyHistory.edit().remove("symptom_history_v1").commit()) {
@@ -78,12 +86,12 @@ class LocalDataStore(context: Context, private val gson: Gson = Gson()) {
 
     suspend fun updateMedications(change: (List<MedicationItem>) -> List<MedicationItem>): List<MedicationItem>? = mutex.withLock {
         withContext(Dispatchers.IO) {
-            if (readError) return@withContext null
+            if (medicationsReadError) return@withContext null
             // A notification action can write from another store instance while UI is backgrounded.
             val current = prefs.getString("medications_list_v3", null)
             val latest = try {
                 if (current == null) medications else medicationCodec.decode(current)
-            } catch (_: Exception) { readError = true; return@withContext null }
+            } catch (_: Exception) { medicationsReadError = true; return@withContext null }
             val next = medicationCodec.decode(medicationCodec.encode(change(latest)))
             if (prefs.edit().putString("medications_list_v3", medicationCodec.encode(next)).commit()) {
                 medications = next

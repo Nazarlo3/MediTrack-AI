@@ -1,5 +1,7 @@
 # Стан і наступні кроки MediTrack AI
 
+Feature_27: виділено MedicationRepository/SettingsViewModel, lifecycle-aware collection і спільні UI-компоненти; помилки читання історії/ліків ізольовано без зміни JSON. Наявні версії залежностей винесено в каталог, додано lifecycle-runtime-compose відповідної runtime-версії та CI workflow. GitHub run, доступність із великим шрифтом/TalkBack, process death і реальні тривалі сценарії нагадувань лишаються окремими перевірками. [План/межі](impl/feature_27/changelog.md).
+
 0.5.1: стійкий SQLite outbox реалізовано опційно за COLLECTION_OUTBOX_PATH; без нього Google підтверджує синхронний запис. Попереднє обмеження RAM-черги усунено в коді; для стійкої асинхронної роботи Render потрібен постійний диск/зовнішня БД. Read-only перевірка: поточний Render free/no disk. Платне сховище, push і deployment не вважаються виконаними лише через створення коміту. [Журнал 0.5.1](impl/release_0_5_1/changelog.md).
 
 ## Актуальне доповнення: feature_25, 09.11.2026
