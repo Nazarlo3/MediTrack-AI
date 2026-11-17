@@ -1,0 +1,43 @@
+name: Помилка
+description: Повідомити про помилку в MediTrack AI
+title: "[Помилка] "
+body:
+  - type: markdown
+    attributes:
+      value: Використовуйте синтетичні приклади. Приберіть з опису ключі, особисті та медичні дані. Про вразливості повідомляйте [приватно](https://github.com/Nazarlo3/MediTrack-AI/security/advisories/new).
+  - type: input
+    id: version
+    attributes:
+      label: Версія застосунку
+      description: Версія та тип збірки з розділу «Про застосунок».
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Пристрій і версія Android
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Кроки відтворення
+      description: Якщо помилка стосується AI, вкажіть, чи використовували Render або локальний backend.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Очікуваний результат
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Фактичний результат
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Скриншоти або журнали без приватних даних
